@@ -1,0 +1,39 @@
+[build-system]
+requires = ["setuptools"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "homeconnect-watcher"
+authors = [
+    {name = "Rogier van der Geer", email = "rogier@vander-geer.nl"},
+]
+description = "Python service that listens to HomeConnect event and logs them."
+readme = "README.md"
+requires-python = ">=3.10"
+license = {text = "MIT"}
+classifiers = [
+    "Programming Language :: Python :: 3",
+]
+dependencies = [
+    "authlib>=1.2.0",
+    "fastapi>=0.92.0",
+    "python-dotenv>=0.21.1",
+    "requests>=2.28.2",
+    "httpx>=0.23.3",
+    "typer>=0.7.0",
+    "uvicorn>=0.20.0",
+]
+dynamic = ["version"]
+
+[project.optional-dependencies]
+dev = ["pytest>=7.2.1", "pytest-asyncio>=0.20.3"]
+
+[project.scripts]
+homeconnect-watcher = "homeconnect_watcher.cli:app"
+
+[tool.setuptools.dynamic]
+version = {attr = "homeconnect_watcher.VERSION"}
+
+[tool.black]
+line-length = 120
+target-version = ["py310"]
