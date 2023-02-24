@@ -31,6 +31,7 @@ class HomeConnectAppliance:
                 if response["error"]["key"] == "SDK.Error.UnsupportedOperation":
                     self._available_programs = []
                 else:
+                    self.client.logger.error(response["error"])
                     raise HomeConnectRequestError(response["error"]["key"])
             else:
                 self._available_programs = [program["key"] for program in response["data"]["programs"]]
