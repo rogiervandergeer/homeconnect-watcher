@@ -24,14 +24,6 @@ class TestFromStream:
                 assert event.appliance_id == event.data["haId"]
                 assert event.timestamp is not None
 
-    def test_status_event(self):
-        data = b'event: STATUS\ndata: {"items":[{"level":"hint","handling":"none","key":"BSH.Common.Status.DoorState","value":"BSH.Common.EnumType.DoorState.Closed","uri":"/api/homeappliances/BOSCH-HCS01OVN1-0C545684B8A9/status/BSH.Common.Status.DoorState","timestamp":1677230411}]}\nid: BOSCH-HCS01OVN1-0C545684B8A9\n\n'
-        event = HomeConnectEvent.from_stream(data)
-        assert event.event == "STATUS"
-        assert event.data is not None
-        assert event.appliance_id == event.data["haId"]
-        assert event.timestamp is not None
-
     def test_event(self, stream_data: list[bytes]):
         for line in stream_data:
             if b"EVENT" in line:
