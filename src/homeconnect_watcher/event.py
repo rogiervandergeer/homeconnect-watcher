@@ -15,6 +15,7 @@ class HomeConnectEvent:
     @classmethod
     def from_request(cls, request: str, appliance_id: str, response: dict) -> "HomeConnectEvent":
         if "error" in response:
+            # TODO: deal with no program selected/active
             raise HomeConnectRequestError(response["error"])
         response["data"]["timestamp"] = int(time())
         return HomeConnectEvent(event=f"{request}-REQUEST", appliance_id=appliance_id, data=response["data"])
@@ -40,6 +41,27 @@ class HomeConnectEvent:
         return self.event.endswith("-REQUEST")
 
     @property
+    def items(self) -> dict[str, str]:
+        """Extract the payload into key/value pairs."""
+        if "items" in self.data:  # For STATUS/EVENT/NOTIFY
+            return {item["key"]: item["value"] for item in self.data["items"]}
+        elif "key" in self.data:  # For CONNECTED/DISCONNECTED
+            return {self.data["key"]: self.data["value"]}
+        elif "status" in self.data:  # For STATUS-REQUEST
+            return self.data["status"]
+        elif "settings" in self.data:  # For SETTINGS-REQUEST
+            return self.data["settings"]
+        elif self.event == "ACTIVE-PROGRAM-REQUEST":
+            result = {item["key"]: item["value"] for item in self.data["options"]}
+            result["BSH.Common.Root.ActiveProgram"] = self.data["key"]
+            return result
+        elif self.event == "SELECTED-PROGRAM-REQUEST":
+            result = {item["key"]: item["value"] for item in self.data["options"]}
+            result["BSH.Common.Root.SelectedProgram"] = self.data["key"]
+            return result
+        return {}
+
+    @property
     def timestamp(self) -> int | None:
         """Look up the timestamp from the event data."""
         if self.data:
@@ -54,11 +76,20 @@ class HomeConnectEvent:
     @property
     def trigger(self) -> Trigger:
         if self.event in ("CONNECTED", "PAIRED"):
+            # For any new(ly connected) appliance, we perform all requests.
             return Trigger(
                 appliance_id=self.appliance_id, status=True, settings=True, selected_program=True, active_program=True
             )
         elif self.event in ("NOTIFY", "EVENT"):
-            pass
+            # For any appliance that is active, request the status once in a while.
+            return Trigger(appliance_id=self.appliance_id, status=True, interval=True)
         elif self.event == "STATUS":
-            pass
+            # For an appliance that just switched to running, get the program.
+            if self.items.get("BSH.Common.Status.OperationState", "") == "BSH.Common.EnumType.OperationState.Run":
+                return Trigger(appliance_id=self.appliance_id, active_program=True, settings=True)
+            # For an appliance that was controlled locally, but is no more: get the programs once in a while.
+            if self.items.get("BSH.Common.Status.LocalControlActive") is False:
+                return Trigger(
+                    appliance_id=self.appliance_id, active_program=True, selected_program=True, interval=True
+                )
         return Trigger(appliance_id=self.appliance_id)  # Empty trigger

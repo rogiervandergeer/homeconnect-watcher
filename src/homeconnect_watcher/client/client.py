@@ -119,7 +119,11 @@ class HomeConnectClient:
 
         Listen to the event stream and yield all events.
         """
-        # TODO: initial requests
+        for appliance in await self.appliances:
+            yield await appliance.get_status()
+            yield await appliance.get_settings()
+            yield await appliance.get_active_program()
+            yield await appliance.get_selected_program()
         while True:
             try:
                 async for event in self.events(appliance_id=appliance_id):
