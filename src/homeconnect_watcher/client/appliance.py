@@ -21,7 +21,7 @@ class HomeConnectAppliance:
 
     @property
     def time_since_update(self) -> float:
-        return time() - self._last_program_update
+        return time() - self._last_update
 
     async def get_available_programs(self) -> list[str] | None:
         if self._available_programs is None:
