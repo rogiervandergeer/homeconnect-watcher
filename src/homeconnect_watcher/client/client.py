@@ -102,7 +102,6 @@ class HomeConnectClient:
             try:
                 async for entry in timeout(event_stream.aiter_bytes(), duration=120):
                     if entry:
-                        print(entry)
                         yield HomeConnectEvent.from_stream(entry)
             except (RemoteProtocolError, StreamError) as e:
                 self.logger.warning("Stream error:", exc_info=e)
@@ -120,10 +119,16 @@ class HomeConnectClient:
         Listen to the event stream and yield all events.
         """
         for appliance in await self.appliances:
-            yield await appliance.get_status()
-            yield await appliance.get_settings()
-            yield await appliance.get_active_program()
-            yield await appliance.get_selected_program()
+            async for triggered_event in self._handle_trigger(
+                Trigger(
+                    appliance_id=appliance.appliance_id,
+                    status=True,
+                    settings=True,
+                    active_program=True,
+                    selected_program=True,
+                )
+            ):
+                yield triggered_event
         while True:
             try:
                 async for event in self.events(appliance_id=appliance_id):
@@ -153,13 +158,16 @@ class HomeConnectClient:
             dump(token, token_file)
 
     async def _get(self, path: str) -> dict[str, ...]:
+        await sleep(delay=1.5)  # Rate limit
         resp = await self.client.get(f"{self._appliances_endpoint}{path}")
         data = resp.json()
         if len(data.keys()) > 1:
             raise KeyError(f"Unexpected keys: {data.keys()}")
         return data
 
-    async def _handle_trigger(self, trigger: Trigger) -> AsyncIterable[HomeConnectEvent]:
+    async def _handle_trigger(self, trigger: Trigger | None) -> AsyncIterable[HomeConnectEvent]:
+        if trigger is None:
+            return
         appliance = await self.get_appliance(trigger.appliance_id)
         if trigger.interval and appliance.time_since_update < 300:
             return  # If the trigger is an interval trigger, only do requests if last requests were 5 minutes ago.
@@ -167,10 +175,11 @@ class HomeConnectClient:
             yield await appliance.get_status()
         if trigger.settings:
             yield await appliance.get_settings()
-        if trigger.active_program:
-            yield await appliance.get_active_program()
-        if trigger.selected_program:
-            yield await appliance.get_selected_program()
+        if await appliance.get_available_programs():  # Only if the appliance supports programs.
+            if trigger.active_program:
+                yield await appliance.get_active_program()
+            if trigger.selected_program:
+                yield await appliance.get_selected_program()
 
 
 class HomeConnectSimulationClient(HomeConnectClient):
