@@ -81,9 +81,9 @@ class TestRequest:
     @mark.asyncio
     async def test_active_program(self, appliance: HomeConnectAppliance):
         # By default, the simulator appliances are inactive.
-        with raises(HomeConnectRequestError) as e:
-            event = await appliance.get_active_program()
-        assert e.value.data == {"key": "SDK.Error.NoProgramActive", "description": "There is no program active"}
+        event = await appliance.get_active_program()
+        assert event.error["key"] == "SDK.Error.NoProgramActive"
+        assert event.items["BSH.Common.Root.ActiveProgram"] is None
 
     @mark.asyncio
     async def test_selected_program(self, appliance: HomeConnectAppliance):
