@@ -95,6 +95,7 @@ class HomeConnectClient:
             if appliance_id is None
             else f"{self._appliances_endpoint}/{appliance_id}/events"
         )
+        self.logger.info("Opening event stream.")
         async with self.client.stream("GET", url, timeout=None) as event_stream:
             if event_stream.status_code != 200:
                 self.logger.warning(f"Failed to connect to events endpoint. Status code: {event_stream.status_code}")
@@ -147,14 +148,16 @@ class HomeConnectClient:
     def _load_token(self) -> OAuth2Token | None:
         """Load the OAuth token from file."""
         if not self.token_cache.is_file():
-            self.logger.warning(f"Token cache not found.")
+            self.logger.warning("Token cache not found.")
             return
         with self.token_cache.open() as token_file:
+            self.logger.info("Loading token from disk.")
             return OAuth2Token(load(token_file))
 
     async def _save_token(self, token: OAuth2Token, refresh_token=None) -> None:  # noqa
         """Save the OAuth token to the token cache."""
         with self.token_cache.open(mode="w") as token_file:
+            self.logger.info("Saving token to disk.")
             dump(token, token_file)
 
     async def _get(self, path: str) -> dict[str, ...]:

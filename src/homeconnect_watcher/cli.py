@@ -1,4 +1,5 @@
 from asyncio import run as async_run
+from logging import basicConfig, INFO
 
 from fastapi import FastAPI
 from fastapi.responses import Response
@@ -9,6 +10,7 @@ from homeconnect_watcher.api import loop
 from homeconnect_watcher.client.client import HomeConnectSimulationClient, HomeConnectClient
 
 app = Typer()
+basicConfig(level=INFO)
 
 
 @app.command()

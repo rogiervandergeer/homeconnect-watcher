@@ -1,4 +1,5 @@
 from datetime import datetime, timedelta
+from logging import getLogger
 from pathlib import Path
 from typing import Optional, TextIO
 
@@ -9,6 +10,7 @@ from .base import BaseExporter
 
 class FileExporter(BaseExporter):
     def __init__(self, path: Path, flush_interval: timedelta = timedelta(minutes=30)):
+        self.logger = getLogger(__name__)
         self.path = path
         self.flush_interval = flush_interval
         self._fp: Optional[TextIO] = None
@@ -33,8 +35,11 @@ class FileExporter(BaseExporter):
             self._fp.close()
             self._fp = self._open()
         elif now - self._last_flush > self.flush_interval:
+            self.logger.info(f"Flushing output file.")
             self._fp.flush()
 
     def _open(self) -> TextIO:
         self._last_flush = datetime.now()
-        return (self.path / f"hcw_{self._last_flush.date().strftime('%Y-%m-%d')}.jsonl").open("a")
+        path = self.path / f"hcw_{self._last_flush.date().strftime('%Y-%m-%d')}.jsonl"
+        self.logger.info(f"Opening output file {str(path)}.")
+        return path.open("a")
