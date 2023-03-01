@@ -30,7 +30,10 @@ class HomeConnectAppliance:
                 # Some appliances do not support programs.
                 if response["error"]["key"] == "SDK.Error.UnsupportedOperation":
                     self._available_programs = []
-                elif response["error"]["key"] == "SDK.Error.HomeAppliance.Connection.Initialization.Failed":
+                elif response["error"]["key"] in (
+                    "SDK.Error.HomeAppliance.Connection.Initialization.Failed",
+                    "SDK.Error.WrongOperationState",
+                ):
                     return None
                 else:
                     self.client.logger.error(response["error"])
