@@ -9,14 +9,14 @@ from typing import AsyncIterable
 from authlib.integrations.httpx_client import AsyncOAuth2Client
 from authlib.oauth2.rfc6749.wrappers import OAuth2Token
 from requests import Session
-from httpx import StreamError, RemoteProtocolError
+from httpx import StreamError, ReadTimeout, RemoteProtocolError
 
 
 from homeconnect_watcher.client.appliance import HomeConnectAppliance
 from homeconnect_watcher.client.trigger import Trigger
 from homeconnect_watcher.event import HomeConnectEvent
 from homeconnect_watcher.exceptions import HomeConnectRequestError, HomeConnectConnectionClosed, HomeConnectTimeout
-from homeconnect_watcher.utils.timeout import timeout
+from homeconnect_watcher.utils import retry, timeout
 
 
 class HomeConnectClient:
@@ -160,6 +160,7 @@ class HomeConnectClient:
             self.logger.info("Saving token to disk.")
             dump(token, token_file)
 
+    @retry(n_tries=3, exceptions=(ReadTimeout, ))
     async def _get(self, path: str) -> dict[str, ...]:
         await sleep(delay=1.5)  # Rate limit
         resp = await self.client.get(f"{self._appliances_endpoint}{path}")
