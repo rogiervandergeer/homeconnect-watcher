@@ -75,11 +75,11 @@ def define_endpoints(simulation: bool):
     return api
 
 
-async def loop(client: HomeConnectClient):
+async def loop(client: HomeConnectClient, flush_interval: int):
     if isinstance(client, HomeConnectSimulationClient):
         await client.authenticate("username", "password")
     path = Path(environ["HOMECONNECT_PATH"]) if "HOMECONNECT_PATH" in environ else Path()
-    exporter = FileExporter(path, flush_interval=timedelta(seconds=30))
+    exporter = FileExporter(path, flush_interval=timedelta(seconds=flush_interval))
     with exporter:
         async for event in client.watch():
             exporter.export(event)

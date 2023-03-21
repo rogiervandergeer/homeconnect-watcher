@@ -32,7 +32,7 @@ def authorize(log_level: LogLevel = LogLevel.INFO):
 
 
 @app.command()
-def watch(simulation: bool = False, log_level: LogLevel = LogLevel.INFO):
+def watch(simulation: bool = False, flush_interval: int = 300, log_level: LogLevel = LogLevel.INFO):
     initialize_logging(level=log_level)
     client = (HomeConnectSimulationClient if simulation else HomeConnectClient)()
-    async_run(loop(client))
+    async_run(loop(client, flush_interval=flush_interval))
