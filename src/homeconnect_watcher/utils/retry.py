@@ -18,5 +18,7 @@ def retry(n_tries: int, delay: float = 1, exceptions: Type[Exception] | tuple[Ty
                         raise exc
                     else:
                         await sleep(delay)
+
         return wrapper
+
     return func_wrapper
