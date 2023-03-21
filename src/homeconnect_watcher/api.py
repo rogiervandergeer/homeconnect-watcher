@@ -76,6 +76,8 @@ def define_endpoints(simulation: bool):
 
 
 async def loop(client: HomeConnectClient):
+    if isinstance(client, HomeConnectSimulationClient):
+        await client.authenticate("username", "password")
     path = Path(environ["HOMECONNECT_PATH"]) if "HOMECONNECT_PATH" in environ else Path()
     exporter = FileExporter(path, flush_interval=timedelta(seconds=30))
     with exporter:
