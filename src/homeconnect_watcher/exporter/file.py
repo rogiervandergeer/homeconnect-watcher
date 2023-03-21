@@ -35,6 +35,7 @@ class FileExporter(BaseExporter):
             self._fp = self._open()
         elif now - self._last_flush > self.flush_interval:
             self.logger.info(f"Flushing output file.")
+            self._last_flush = datetime.now()
             self._fp.flush()
 
     def _open(self) -> TextIO:
