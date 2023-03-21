@@ -1,5 +1,4 @@
 from datetime import datetime, timedelta
-from logging import getLogger
 from pathlib import Path
 from typing import Optional, TextIO
 
@@ -10,7 +9,7 @@ from .base import BaseExporter
 
 class FileExporter(BaseExporter):
     def __init__(self, path: Path, flush_interval: timedelta = timedelta(minutes=30)):
-        self.logger = getLogger(__name__)
+        super().__init__()
         self.path = path
         self.flush_interval = flush_interval
         self._fp: Optional[TextIO] = None

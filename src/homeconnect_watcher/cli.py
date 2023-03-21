@@ -1,5 +1,4 @@
 from asyncio import run as async_run
-from logging import basicConfig, INFO
 
 from fastapi import FastAPI
 from fastapi.responses import Response
@@ -8,13 +7,14 @@ from uvicorn import run
 
 from homeconnect_watcher.api import loop
 from homeconnect_watcher.client.client import HomeConnectSimulationClient, HomeConnectClient
+from homeconnect_watcher.utils import LogLevel, initialize_logging
 
 app = Typer()
-basicConfig(level=INFO)
 
 
 @app.command()
-def authorize():
+def authorize(log_level: LogLevel = LogLevel.INFO):
+    initialize_logging(level=log_level)
     client = HomeConnectClient()
 
     api = FastAPI()
@@ -32,6 +32,7 @@ def authorize():
 
 
 @app.command()
-def watch(simulation: bool = False):
+def watch(simulation: bool = False, log_level: LogLevel = LogLevel.INFO):
+    initialize_logging(level=log_level)
     client = (HomeConnectSimulationClient if simulation else HomeConnectClient)()
     async_run(loop(client))
