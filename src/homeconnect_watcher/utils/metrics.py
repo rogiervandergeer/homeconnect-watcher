@@ -29,7 +29,7 @@ class Metrics:
         self._metric_uptime.set_function(lambda: monotonic() - self._start_time)
         self._n_appliances = Gauge("n_appliances", "The number of known appliances.")
         self._token_refresh = Counter("token_refresh", "The number of times the token was refreshed.")
-
+        self.logger.info(f"Exposing prometheus metrics on port {port}.")
         start_http_server(port)
 
     def increment_disconnects(self, reason: str) -> None:
