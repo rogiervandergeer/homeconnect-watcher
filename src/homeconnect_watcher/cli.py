@@ -7,7 +7,7 @@ from uvicorn import run
 
 from homeconnect_watcher.api import loop
 from homeconnect_watcher.client.client import HomeConnectSimulationClient, HomeConnectClient
-from homeconnect_watcher.utils import LogLevel, initialize_logging
+from homeconnect_watcher.utils import LogLevel, Metrics, initialize_logging
 
 app = Typer()
 
@@ -32,7 +32,13 @@ def authorize(log_level: LogLevel = LogLevel.INFO):
 
 
 @app.command()
-def watch(simulation: bool = False, flush_interval: int = 300, log_level: LogLevel = LogLevel.INFO):
+def watch(
+    simulation: bool = False,
+    flush_interval: int = 300,
+    log_level: LogLevel = LogLevel.INFO,
+    metrics_port: int | None = None,
+):
     initialize_logging(level=log_level)
-    client = (HomeConnectSimulationClient if simulation else HomeConnectClient)()
+    metrics = Metrics(port=metrics_port) if metrics_port else None
+    client = (HomeConnectSimulationClient if simulation else HomeConnectClient)(metrics=metrics)
     async_run(loop(client, flush_interval=flush_interval))

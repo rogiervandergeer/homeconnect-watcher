@@ -37,6 +37,17 @@ Next up, run
 homeconnect-watcher watch
 ```
 
+## Exposing Metrics to Prometheus
+
+The watcher can expose its metrics to Prometheus. This requires the `prometheus-client` to be installed;
+```shell
+pip install "homeconnect-watcher[prometheus]"
+```
+
+Then, when starting the watcher, pass the port you want to expose the metrics to. For example:
+```shell
+homeconnect-watcher watch --metrics-port 8000
+```
 
 ## Events
 
