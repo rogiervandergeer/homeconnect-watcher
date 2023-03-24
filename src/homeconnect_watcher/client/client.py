@@ -160,7 +160,7 @@ class HomeConnectClient:
             self.logger.info("Saving token to disk.")
             dump(token, token_file)
 
-    @retry(n_tries=3, exceptions=(ReadTimeout, ))
+    @retry(n_tries=3, exceptions=(ReadTimeout,))
     async def _get(self, path: str) -> dict[str, ...]:
         await sleep(delay=1.5)  # Rate limit
         resp = await self.client.get(f"{self._appliances_endpoint}{path}")
