@@ -4,6 +4,7 @@ from logging import getLogger
 from os import environ
 from pathlib import Path
 from re import search
+from time import monotonic
 from typing import AsyncIterable
 
 from authlib.integrations.httpx_client import AsyncOAuth2Client
@@ -16,7 +17,7 @@ from homeconnect_watcher.client.appliance import HomeConnectAppliance
 from homeconnect_watcher.client.trigger import Trigger
 from homeconnect_watcher.event import HomeConnectEvent
 from homeconnect_watcher.exceptions import HomeConnectRequestError, HomeConnectConnectionClosed, HomeConnectTimeout
-from homeconnect_watcher.utils import retry, timeout
+from homeconnect_watcher.utils import Metrics, retry, timeout
 
 
 class HomeConnectClient:
@@ -24,10 +25,7 @@ class HomeConnectClient:
     _appliances_endpoint = "https://api.home-connect.com/api/homeappliances"
     _token_endpoint = "https://api.home-connect.com/security/oauth/token"
 
-    def __init__(
-        self,
-        token_cache: Path = Path("token"),
-    ):
+    def __init__(self, token_cache: Path = Path("token"), metrics: Metrics | None = None):
         self.token_cache = (
             Path(environ["HOMECONNECT_PATH"]) / token_cache if "HOMECONNECT_PATH" in environ else token_cache
         )
@@ -42,7 +40,11 @@ class HomeConnectClient:
         )
         self.client.auth = self.client.token_auth  # Ensure we use token auth for all requests.
         self._appliances: list["HomeConnectAppliance"] | None = None
-        self.last_event: int | None = None
+        self._last_event: int | None = None
+        self.metrics = metrics
+        if self.metrics:
+            self.metrics.set_last_event(lambda: monotonic() - self._last_event if self._last_event else -1)
+            self.metrics.set_n_appliances(lambda: len(self._appliances) if self._appliances else 0)
 
     @property
     async def appliances(self) -> list["HomeConnectAppliance"]:
@@ -104,6 +106,7 @@ class HomeConnectClient:
                 async for entry in timeout(event_stream.aiter_bytes(), duration=120):
                     if entry:
                         yield HomeConnectEvent.from_stream(entry)
+                        self._last_event = monotonic()
             except (RemoteProtocolError, StreamError) as e:
                 self.logger.warning("Stream error:", exc_info=e)
                 raise HomeConnectConnectionClosed()
@@ -130,18 +133,28 @@ class HomeConnectClient:
                 )
             ):
                 yield triggered_event
+                if self.metrics:
+                    self.metrics.increment_event_counter(triggered_event)
         while True:
             try:
                 async for event in self.events(appliance_id=appliance_id):
                     yield event
+                    if self.metrics:
+                        self.metrics.increment_event_counter(event)
                     async for triggered_event in self._handle_trigger(event.trigger):
                         yield triggered_event
+                        if self.metrics:
+                            self.metrics.increment_event_counter(triggered_event)
             except HomeConnectConnectionClosed:
                 self.logger.warning(f"Connection closed. Reconnecting in {reconnect_delay} seconds.")
+                if self.metrics:
+                    self.metrics.increment_disconnects(reason="closed")
                 await sleep(reconnect_delay)
                 continue
             except HomeConnectTimeout:
                 self.logger.warning(f"Connection timed out. Reconnecting in {reconnect_delay} seconds.")
+                if self.metrics:
+                    self.metrics.increment_disconnects(reason="timeout")
                 await sleep(reconnect_delay)
                 continue
 
@@ -156,11 +169,13 @@ class HomeConnectClient:
 
     async def _save_token(self, token: OAuth2Token, refresh_token=None) -> None:  # noqa
         """Save the OAuth token to the token cache."""
+        if self.metrics:
+            self.metrics.increment_token_refresh()
         with self.token_cache.open(mode="w") as token_file:
             self.logger.info("Saving token to disk.")
             dump(token, token_file)
 
-    @retry(n_tries=3, exceptions=(ReadTimeout, ))
+    @retry(n_tries=3, exceptions=(ReadTimeout,))
     async def _get(self, path: str) -> dict[str, ...]:
         await sleep(delay=1.5)  # Rate limit
         resp = await self.client.get(f"{self._appliances_endpoint}{path}")
@@ -191,11 +206,8 @@ class HomeConnectSimulationClient(HomeConnectClient):
     _appliances_endpoint = "https://simulator.home-connect.com/api/homeappliances"
     _token_endpoint = "https://simulator.home-connect.com/security/oauth/token"
 
-    def __init__(
-        self,
-        token_cache: Path = Path("simulation_token"),
-    ):
-        super().__init__(token_cache=token_cache)
+    def __init__(self, token_cache: Path = Path("simulation_token"), metrics: Metrics | None = None):
+        super().__init__(token_cache=token_cache, metrics=metrics)
 
     async def authenticate(self, username: str, password: str):
         """Automatic simulation login. Any username/password goes, except 'wrongPassword'."""

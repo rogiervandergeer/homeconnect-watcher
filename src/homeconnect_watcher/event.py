@@ -3,7 +3,6 @@ from json import dumps, loads
 from time import time
 
 from homeconnect_watcher.client.trigger import Trigger
-from homeconnect_watcher.exceptions import HomeConnectRequestError
 
 
 @dataclass
