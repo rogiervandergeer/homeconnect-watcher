@@ -8,25 +8,30 @@ from homeconnect_watcher.client.trigger import Trigger
 @dataclass
 class HomeConnectEvent:
     event: str
+    timestamp: int
     appliance_id: str | None = None
     data: dict[str, ...] | None = None
     error: dict[str, ...] | None = None
 
     @classmethod
     def from_request(cls, request: str, appliance_id: str, response: dict[str, ...]) -> "HomeConnectEvent":
-        data = None
-        error = None
         if "error" in response:
             error = response["error"]
-            error["timestamp"] = int(time())
+            data = None
         else:
             data = response["data"]
-            data["timestamp"] = int(time())
-        return HomeConnectEvent(event=f"{request}-REQUEST", appliance_id=appliance_id, data=data, error=error)
+            error = None
+        return HomeConnectEvent(
+            event=f"{request}-REQUEST",
+            timestamp=int(time()),
+            appliance_id=appliance_id,
+            data=data,
+            error=error,
+        )
 
     @classmethod
     def from_stream(cls, stream: bytes) -> "HomeConnectEvent":
-        data = {}
+        data = {"timestamp": int(time())}
         for line in stream.decode("utf-8").split("\n"):
             if line.startswith("data:") and len(line) > 5:
                 data["data"] = loads(line[5:])
@@ -78,17 +83,8 @@ class HomeConnectEvent:
             return self.error["key"]
         return None
 
-    @property
-    def timestamp(self) -> int | None:
-        """Look up the timestamp from the event data."""
-        if self.data:
-            if "timestamp" in self.data:
-                return self.data["timestamp"]
-            # This assumes that all timestamps of the items are equal.
-            return self.data["items"][0]["timestamp"]
-
     def __str__(self) -> str:
-        data = dict(appliance_id=self.appliance_id, event=self.event)
+        data = dict(appliance_id=self.appliance_id, event=self.event, timestamp=self.timestamp)
         if self.data:
             data["data"] = self.data
         if self.error:

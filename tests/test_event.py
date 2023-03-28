@@ -1,8 +1,7 @@
-from pytest import mark, raises
+from pytest import mark
 
 from homeconnect_watcher.client import HomeConnectAppliance
 from homeconnect_watcher.event import HomeConnectEvent
-from homeconnect_watcher.exceptions import HomeConnectRequestError
 
 
 class TestFromStream:
@@ -13,7 +12,7 @@ class TestFromStream:
                 assert event.event == "KEEP-ALIVE"
                 assert event.data is None
                 assert event.appliance_id is None
-                assert event.timestamp is None
+                assert event.timestamp is not None
 
     def test_status(self, stream_data: list[bytes]):
         for line in stream_data:

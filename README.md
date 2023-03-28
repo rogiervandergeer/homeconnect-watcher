@@ -220,3 +220,8 @@ Settings information
   }
 }
 ```
+
+## Changelog
+
+0.0.4 Add timestamp to events
+0.0.3 Expose Prometheus metrics
