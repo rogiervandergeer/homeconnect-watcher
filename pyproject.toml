@@ -35,6 +35,5 @@ homeconnect-watcher = "homeconnect_watcher.cli:app"
 [tool.setuptools.dynamic]
 version = {attr = "homeconnect_watcher.VERSION"}
 
-[tool.black]
+[tool.ruff]
 line-length = 120
-target-version = ["py310"]
