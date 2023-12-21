@@ -2,7 +2,7 @@ from dataclasses import dataclass
 from json import dumps, loads
 from time import time
 
-from homeconnect_watcher.client.trigger import Trigger
+from homeconnect_watcher.trigger import Trigger
 
 
 @dataclass
