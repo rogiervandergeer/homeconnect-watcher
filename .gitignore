@@ -131,3 +131,7 @@ dmypy.json
 # HomeConnect Tokens
 token
 simulation_token
+
+# Directories
+data/
+notebooks/
