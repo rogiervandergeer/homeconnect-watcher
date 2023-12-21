@@ -32,11 +32,10 @@ async def client(tmp_path_factory) -> HomeConnectClient:
 @async_fixture(scope="session")
 async def appliance(client: HomeConnectClient) -> HomeConnectAppliance:
     appliances = await client.appliances
-    print(appliances)
-    for appliance in appliances:
-        print(appliance)
-        print(await appliance.get_status())
-    return appliances[0]
+    for app in appliances:
+        if app.appliance_type == "Washer":
+            return app
+    raise RuntimeError("No washers available.")
 
 
 @fixture(scope="function")

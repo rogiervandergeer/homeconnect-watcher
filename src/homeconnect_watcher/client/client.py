@@ -85,12 +85,49 @@ class HomeConnectClient:
         await self.client.fetch_token(self._token_endpoint, authorization_response=url)
         await self._save_token(self.client.token)
 
-    async def events(self, appliance_id: str | None = None) -> AsyncIterable[HomeConnectEvent]:
+    async def watch(
+        self, appliance_id: str | None = None, reconnect_delay: int = 120
+    ) -> AsyncIterable[HomeConnectEvent]:
         """
-        Connect to an event stream.
+        Watch the status of one or all appliances.
+
+        Listens to the event stream and yield all events. In addition, processes triggers of these events
+        to make requests for further details.
+
+        Automatically reconnects when disconnected or on timeout.
+        """
+        async for event in self._initial_triggers(appliance_id=appliance_id):
+            yield event
+        while True:
+            try:
+                async for event in self._event_stream(appliance_id=appliance_id):
+                    async for resulting_event in self._handle_event_and_triggers(event=event):
+                        yield resulting_event
+            except HomeConnectConnectionClosed:
+                self.logger.warning(f"Connection closed. Reconnecting in {reconnect_delay} seconds.")
+                if self.metrics:
+                    self.metrics.increment_disconnects(reason="closed")
+                await sleep(reconnect_delay)
+                continue
+            except HomeConnectTimeout:
+                self.logger.warning(f"Connection timed out. Reconnecting in {reconnect_delay} seconds.")
+                if self.metrics:
+                    self.metrics.increment_disconnects(reason="timeout")
+                await sleep(reconnect_delay)
+                continue
+
+    async def _event_stream(self, appliance_id: str | None = None) -> AsyncIterable[HomeConnectEvent]:
+        """
+        Connect to an event stream and yield the events.
 
         If appliance_id is provided, will watch only to events of the given appliance.
         Otherwise, will watch to the global event stream.
+
+        Raises:
+            HomeConnectConnectionClosed:
+                when the connection can not be established or when there is a stream error.
+            HomeConnectTimeout:
+                when no events are received in 120 seconds.
         """
         url = (
             f"{self._appliances_endpoint}/events"
@@ -114,49 +151,58 @@ class HomeConnectClient:
                 self.logger.info("Reached end of events stream.")
                 return
 
-    async def watch(
-        self, appliance_id: str | None = None, reconnect_delay: int = 120
-    ) -> AsyncIterable[HomeConnectEvent]:
+    async def _handle_event_and_triggers(self, event: HomeConnectEvent) -> AsyncIterable[HomeConnectEvent]:
         """
-        Watch the status of one or all appliances.
+        Handle triggers for an event and increase all corresponding counters.
+        """
+        if self.metrics:
+            self.metrics.increment_event_counter(event=event)
+        yield event
+        async for triggered_event in self._handle_trigger(event.trigger):
+            if self.metrics:
+                self.metrics.increment_event_counter(triggered_event)
+            yield triggered_event
 
-        Listen to the event stream and yield all events.
+    async def _initial_triggers(self, appliance_id: str | None) -> AsyncIterable[HomeConnectEvent]:
+        """
+        Create and handle initial triggers
+
+        If appliance_id is not None, only create requests for the single appliance. Otherwise do so
+        for all known appliances.
         """
         for appliance in await self.appliances:
-            async for triggered_event in self._handle_trigger(
-                Trigger(
-                    appliance_id=appliance.appliance_id,
-                    status=True,
-                    settings=True,
-                    active_program=True,
-                    selected_program=True,
-                )
-            ):
-                yield triggered_event
-                if self.metrics:
-                    self.metrics.increment_event_counter(triggered_event)
-        while True:
-            try:
-                async for event in self.events(appliance_id=appliance_id):
-                    yield event
+            if appliance_id == appliance.appliance_id or appliance_id is None:
+                async for triggered_event in self._handle_trigger(
+                    Trigger(
+                        appliance_id=appliance.appliance_id,
+                        status=True,
+                        settings=True,
+                        active_program=True,
+                        selected_program=True,
+                    )
+                ):
+                    yield triggered_event
                     if self.metrics:
-                        self.metrics.increment_event_counter(event)
-                    async for triggered_event in self._handle_trigger(event.trigger):
-                        yield triggered_event
-                        if self.metrics:
-                            self.metrics.increment_event_counter(triggered_event)
-            except HomeConnectConnectionClosed:
-                self.logger.warning(f"Connection closed. Reconnecting in {reconnect_delay} seconds.")
-                if self.metrics:
-                    self.metrics.increment_disconnects(reason="closed")
-                await sleep(reconnect_delay)
-                continue
-            except HomeConnectTimeout:
-                self.logger.warning(f"Connection timed out. Reconnecting in {reconnect_delay} seconds.")
-                if self.metrics:
-                    self.metrics.increment_disconnects(reason="timeout")
-                await sleep(reconnect_delay)
-                continue
+                        self.metrics.increment_event_counter(triggered_event)
+
+    async def _handle_trigger(self, trigger: Trigger | None) -> AsyncIterable[HomeConnectEvent]:
+        """
+        Handle a trigger.
+        """
+        if trigger is None:
+            return
+        appliance = await self.get_appliance(trigger.appliance_id)
+        if trigger.interval and appliance.time_since_update < 300:
+            return  # If the trigger is an interval trigger, only do requests if last requests were 5 minutes ago.
+        if trigger.status:
+            yield await appliance.get_status()
+        if trigger.settings:
+            yield await appliance.get_settings()
+        if await appliance.get_available_programs():  # Only if the appliance supports programs.
+            if trigger.active_program:
+                yield await appliance.get_active_program()
+            if trigger.selected_program:
+                yield await appliance.get_selected_program()
 
     def _load_token(self) -> OAuth2Token | None:
         """Load the OAuth token from file."""
@@ -183,22 +229,6 @@ class HomeConnectClient:
         if len(data.keys()) > 1:
             raise KeyError(f"Unexpected keys: {data.keys()}")
         return data
-
-    async def _handle_trigger(self, trigger: Trigger | None) -> AsyncIterable[HomeConnectEvent]:
-        if trigger is None:
-            return
-        appliance = await self.get_appliance(trigger.appliance_id)
-        if trigger.interval and appliance.time_since_update < 300:
-            return  # If the trigger is an interval trigger, only do requests if last requests were 5 minutes ago.
-        if trigger.status:
-            yield await appliance.get_status()
-        if trigger.settings:
-            yield await appliance.get_settings()
-        if await appliance.get_available_programs():  # Only if the appliance supports programs.
-            if trigger.active_program:
-                yield await appliance.get_active_program()
-            if trigger.selected_program:
-                yield await appliance.get_selected_program()
 
 
 class HomeConnectSimulationClient(HomeConnectClient):
