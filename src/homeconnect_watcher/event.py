@@ -53,16 +53,7 @@ class HomeConnectEvent:
     @property
     def items(self) -> dict[str, str | None]:
         """Extract the payload into key/value pairs."""
-        if self.data is not None:
-            if "items" in self.data:  # For STATUS/EVENT/NOTIFY
-                return {item["key"]: item["value"] for item in self.data["items"]}
-            elif "key" in self.data:  # For CONNECTED/DISCONNECTED
-                return {self.data["key"]: self.data["value"]}
-            elif "status" in self.data:  # For STATUS-REQUEST
-                return self.data["status"]
-            elif "settings" in self.data:  # For SETTINGS-REQUEST
-                return self.data["settings"]
-        elif self.event == "ACTIVE-PROGRAM-REQUEST":
+        if self.event == "ACTIVE-PROGRAM-REQUEST":
             if self.error_key == "SDK.Error.NoProgramActive":
                 return {"BSH.Common.Root.ActiveProgram": None}
             else:
@@ -76,6 +67,15 @@ class HomeConnectEvent:
                 result = {item["key"]: item["value"] for item in self.data["options"]}
                 result["BSH.Common.Root.SelectedProgram"] = self.data["key"]
                 return result
+        elif self.data is not None:
+            if "items" in self.data:  # For STATUS/EVENT/NOTIFY
+                return {item["key"]: item["value"] for item in self.data["items"]}
+            elif "key" in self.data:  # For CONNECTED/DISCONNECTED
+                return {self.data["key"]: self.data["value"]}
+            elif "status" in self.data:  # For STATUS-REQUEST
+                return {entry["key"]: entry["value"] for entry in self.data["status"]}
+            elif "settings" in self.data:  # For SETTINGS-REQUEST
+                return {entry["key"]: entry["value"] for entry in self.data["settings"]}
         return {}
 
     @property
