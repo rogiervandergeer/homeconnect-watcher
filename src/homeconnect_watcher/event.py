@@ -1,5 +1,6 @@
 from dataclasses import dataclass
 from json import dumps, loads
+from pathlib import Path
 from time import time
 
 from homeconnect_watcher.trigger import Trigger
@@ -111,3 +112,19 @@ class HomeConnectEvent:
                     appliance_id=self.appliance_id, active_program=True, selected_program=True, interval=True
                 )
         return None
+
+
+def load_events(path: Path, include_keep_alive: bool = False) -> list[HomeConnectEvent]:
+    data = []
+    for f in path.glob("*.jsonl"):
+        contents = f.read_text()
+        for line in contents.split("\n"):
+            if len(line) == 0:
+                continue
+            event = HomeConnectEvent.from_string(line)
+            if event.timestamp is not None:
+                data.append(event)
+    return sorted(
+        [event for event in data if include_keep_alive or event.event != "KEEP-ALIVE"],
+        key=lambda e: e.timestamp,
+    )
