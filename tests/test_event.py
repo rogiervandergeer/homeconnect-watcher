@@ -1,6 +1,7 @@
 from pytest import mark, skip
 
 from homeconnect_watcher.client import HomeConnectAppliance
+from homeconnect_watcher.client.trigger import Trigger
 from homeconnect_watcher.event import HomeConnectEvent
 
 
@@ -97,3 +98,10 @@ class TestEvent:
     def test_items(self, event: HomeConnectEvent) -> None:
         items = event.items
         assert isinstance(items, dict)
+
+    def test_trigger(self, event: HomeConnectEvent) -> None:
+        trigger = event.trigger
+        if trigger is None:
+            assert event.event in ("DISCONNECTED", "STATUS") or event.is_request
+        else:
+            assert isinstance(trigger, Trigger)
