@@ -91,3 +91,9 @@ class TestRequest:
         assert event.is_request
         assert event.timestamp is not None
         assert "key" in event.data
+
+
+class TestEvent:
+    def test_items(self, event: HomeConnectEvent) -> None:
+        items = event.items
+        assert isinstance(items, dict)
