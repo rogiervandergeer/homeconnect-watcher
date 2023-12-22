@@ -3,7 +3,7 @@ from time import monotonic
 from typing import Callable
 
 
-from homeconnect_watcher import VERSION
+from homeconnect_watcher._version import __version__
 from homeconnect_watcher.event import HomeConnectEvent
 
 
@@ -23,7 +23,7 @@ class Metrics:
         self._disconnects.labels(reason="timeout")
         self._events = Counter("events", "Number of events.", ["appliance_id", "event"])
         self._info = Info("version", "Version info.")
-        self._info.info({"version": VERSION})
+        self._info.info({"version": __version__})
         self._last_event = Gauge("last_event", "Time since last event.")
         self._metric_uptime = Gauge("uptime", "Watcher uptime.")
         self._metric_uptime.set_function(lambda: monotonic() - self._start_time)

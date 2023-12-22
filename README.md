@@ -223,5 +223,6 @@ Settings information
 
 ## Changelog
 
-0.0.4 Add timestamp to events
-0.0.3 Expose Prometheus metrics
+- 0.0.5 Clean up
+- 0.0.4 Add timestamp to events
+- 0.0.3 Expose Prometheus metrics
