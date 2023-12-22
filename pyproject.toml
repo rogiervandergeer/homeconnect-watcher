@@ -1,5 +1,5 @@
 [build-system]
-requires = ["setuptools"]
+requires = ["setuptools", "setuptools_scm"]
 build-backend = "setuptools.build_meta"
 
 [project]
@@ -32,9 +32,8 @@ prometheus = ["prometheus-client>=0.16.0"]
 [project.scripts]
 homeconnect-watcher = "homeconnect_watcher.cli:app"
 
-[tool.setuptools.dynamic]
-version = {attr = "homeconnect_watcher.VERSION"}
+[tool.setuptools_scm]
+version_file = "src/homeconnect_watcher/_version.py"
 
-[tool.black]
+[tool.ruff]
 line-length = 120
-target-version = ["py310"]
