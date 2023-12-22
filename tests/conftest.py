@@ -37,32 +37,30 @@ async def appliance(client: HomeConnectClient) -> HomeConnectAppliance:
     raise RuntimeError("No washers available.")
 
 
-@fixture(scope="function")
-def stream_data() -> list[bytes]:
-    return [
-        b'event:EVENT\ndata:{"items":[{"timestamp":1642001123,"handling":"none","key":"BSH.Common.Event.ProgramFinished","value":"BSH.Common.EnumType.EventPresentState.Present","level":"hint"}],"haId":"SIEMENS-WM14T6H9NL-AB1234567890"}\nid:SIEMENS-WM14T6H9NL-AB1234567890\n\n',
-        b"event:KEEP-ALIVE\ndata:\n\n",
-        b"event:KEEP-ALIVE\ndata:\n\n",
-        b"event:KEEP-ALIVE\ndata:\n\n",
-        b"event: KEEP-ALIVE\ndata:\n\n",  # Simulator events have spaces.
-        b'event: STATUS\ndata: {"haId":"SIEMENS-WM14T6H9NL-AB1234567890","items":[{"handling":"none","key":"BSH.Common.Status.LocalControlActive","level":"hint","timestamp":1676897835,"uri":"/api/homeappliances/SIEMENS-WM14T6H9NL-AB1234567890/status/BSH.Common.Status.LocalControlActive","value":true},{"handling":"none","key":"BSH.Common.Status.RemoteControlActive","level":"hint","timestamp":1676897835,"uri":"/api/homeappliances/SIEMENS-WM14T6H9NL-AB1234567890/status/BSH.Common.Status.RemoteControlActive","value":false}]}\nid: SIEMENS-WM14T6H9NL-AB1234567890\n\n',
-        b'event:NOTIFY\ndata:{"haId":"SIEMENS-WM14T6H9NL-AB1234567890","items":[{"handling":"none","key":"BSH.Common.Root.SelectedProgram","level":"hint","timestamp":1676897836,"uri":"/api/homeappliances/SIEMENS-WM14T6H9NL-AB1234567890/programs/selected","value":"LaundryCare.Washer.Program.DelicatesSilk"}]}\nid:SIEMENS-WM14T6H9NL-AB1234567890\n\n',
-        b'event:NOTIFY\ndata:{"haId":"SIEMENS-WM14T6H9NL-AB1234567890","items":[{"handling":"none","key":"LaundryCare.Washer.Option.SpinSpeed","level":"hint","timestamp":1676897836,"uri":"/api/homeappliances/SIEMENS-WM14T6H9NL-AB1234567890/programs/selected/options/LaundryCare.Washer.Option.SpinSpeed","value":"LaundryCare.Washer.EnumType.SpinSpeed.RPM600"},{"handling":"none","key":"LaundryCare.Washer.Option.Temperature","level":"hint","timestamp":1676897836,"uri":"/api/homeappliances/SIEMENS-WM14T6H9NL-AB1234567890/programs/selected/options/LaundryCare.Washer.Option.Temperature","value":"LaundryCare.Washer.EnumType.Temperature.GC30"}]}\nid:SIEMENS-WM14T6H9NL-AB1234567890\n\n',
-        b'event:NOTIFY\ndata:{"haId":"SIEMENS-WM14T6H9NL-AB1234567890","items":[{"handling":"none","key":"BSH.Common.Option.FinishInRelative","level":"hint","timestamp":1676897837,"unit":"seconds","uri":"/api/homeappliances/SIEMENS-WM14T6H9NL-AB1234567890/programs/selected/options/BSH.Common.Option.FinishInRelative","value":2580}]}\nid:SIEMENS-WM14T6H9NL-AB1234567890\n\n',
-        b'event:NOTIFY\ndata:{"haId":"SIEMENS-WM14T6H9NL-AB1234567890","items":[{"handling":"none","key":"BSH.Common.Root.SelectedProgram","level":"hint","timestamp":1676897837,"uri":"/api/homeappliances/SIEMENS-WM14T6H9NL-AB1234567890/programs/selected","value":"LaundryCare.Washer.Program.Wool"}]}\nid:SIEMENS-WM14T6H9NL-AB1234567890\n\n',
-        b'event:NOTIFY\ndata:{"haId":"SIEMENS-WM14T6H9NL-AB1234567890","items":[{"handling":"none","key":"LaundryCare.Washer.Option.SpinSpeed","level":"hint","timestamp":1676897837,"uri":"/api/homeappliances/SIEMENS-WM14T6H9NL-AB1234567890/programs/selected/options/LaundryCare.Washer.Option.SpinSpeed","value":"LaundryCare.Washer.EnumType.SpinSpeed.RPM800"}]}\nid:SIEMENS-WM14T6H9NL-AB1234567890\n\n',
-        b'event:NOTIFY\ndata:{"haId":"SIEMENS-WM14T6H9NL-AB1234567890","items":[{"handling":"none","key":"BSH.Common.Option.FinishInRelative","level":"hint","timestamp":1676897838,"unit":"seconds","uri":"/api/homeappliances/SIEMENS-WM14T6H9NL-AB1234567890/programs/selected/options/BSH.Common.Option.FinishInRelative","value":2400}]}\nid:SIEMENS-WM14T6H9NL-AB1234567890\n\n',
-        b'event:STATUS\ndata:{"haId":"SIEMENS-WM14T6H9NL-AB1234567890","items":[{"handling":"none","key":"BSH.Common.Status.DoorState","level":"hint","timestamp":1676897842,"uri":"/api/homeappliances/SIEMENS-WM14T6H9NL-AB1234567890/status/BSH.Common.Status.DoorState","value":"BSH.Common.EnumType.DoorState.Closed"}]}\nid:SIEMENS-WM14T6H9NL-AB1234567890\n\n',
-        b'event:STATUS\ndata:{"haId":"SIEMENS-WM14T6H9NL-AB1234567890","items":[{"handling":"none","key":"BSH.Common.Status.DoorState","level":"hint","timestamp":1676897845,"uri":"/api/homeappliances/SIEMENS-WM14T6H9NL-AB1234567890/status/BSH.Common.Status.DoorState","value":"BSH.Common.EnumType.DoorState.Open"}]}\nid:SIEMENS-WM14T6H9NL-AB1234567890\n\n',
-        b'event:CONNECTED\ndata:{"haId":"SIEMENS-WT8HXM90NL-AB1234567890","handling":"none","key":"BSH.Common.Appliance.Connected","level":"hint","timestamp":1676897865,"value":true}\nid:SIEMENS-WT8HXM90NL-AB1234567890\n\n',
-        b"event:KEEP-ALIVE\ndata:\n\n",
-        b'event:STATUS\ndata:{"haId":"SIEMENS-WT8HXM90NL-AB1234567890","items":[{"handling":"none","key":"BSH.Common.Status.RemoteControlStartAllowed","level":"hint","timestamp":1676897868,"uri":"/api/homeappliances/SIEMENS-WT8HXM90NL-AB1234567890/status/BSH.Common.Status.RemoteControlStartAllowed","value":false}]}\nid:SIEMENS-WT8HXM90NL-AB1234567890\n\n',
-        b'event:NOTIFY\ndata:{"haId":"SIEMENS-WT8HXM90NL-AB1234567890","items":[{"handling":"none","key":"BSH.Common.Root.ActiveProgram","level":"hint","timestamp":1676897868,"uri":"/api/homeappliances/SIEMENS-WT8HXM90NL-AB1234567890/programs/active","value":null},{"handling":"none","key":"BSH.Common.Root.SelectedProgram","level":"hint","timestamp":1676897868,"uri":"/api/homeappliances/SIEMENS-WT8HXM90NL-AB1234567890/programs/selected","value":"LaundryCare.Dryer.Program.Cotton"}]}\nid:SIEMENS-WT8HXM90NL-AB1234567890\n\n',
-        b"event:KEEP-ALIVE\ndata:\n\n",
-        b"event:KEEP-ALIVE\ndata:\n\n",
-        b'event:DISCONNECTED\ndata:{"haId":"SIEMENS-WM14T6H9NL-AB1234567890","handling":"none","key":"BSH.Common.Appliance.Disconnected","level":"hint","timestamp":1676897981,"value":true}\nid:SIEMENS-WM14T6H9NL-AB1234567890\n\n',
-        b"event:KEEP-ALIVE\ndata:\n\n",
-    ]
+STREAM_EVENTS = [
+    b'event:EVENT\ndata:{"items":[{"timestamp":1642001123,"handling":"none","key":"BSH.Common.Event.ProgramFinished","value":"BSH.Common.EnumType.EventPresentState.Present","level":"hint"}],"haId":"SIEMENS-WM14T6H9NL-AB1234567890"}\nid:SIEMENS-WM14T6H9NL-AB1234567890\n\n',
+    b"event:KEEP-ALIVE\ndata:\n\n",
+    b"event:KEEP-ALIVE\ndata:\n\n",
+    b"event:KEEP-ALIVE\ndata:\n\n",
+    b"event: KEEP-ALIVE\ndata:\n\n",  # Simulator events have spaces.
+    b'event: STATUS\ndata: {"haId":"SIEMENS-WM14T6H9NL-AB1234567890","items":[{"handling":"none","key":"BSH.Common.Status.LocalControlActive","level":"hint","timestamp":1676897835,"uri":"/api/homeappliances/SIEMENS-WM14T6H9NL-AB1234567890/status/BSH.Common.Status.LocalControlActive","value":true},{"handling":"none","key":"BSH.Common.Status.RemoteControlActive","level":"hint","timestamp":1676897835,"uri":"/api/homeappliances/SIEMENS-WM14T6H9NL-AB1234567890/status/BSH.Common.Status.RemoteControlActive","value":false}]}\nid: SIEMENS-WM14T6H9NL-AB1234567890\n\n',
+    b'event:NOTIFY\ndata:{"haId":"SIEMENS-WM14T6H9NL-AB1234567890","items":[{"handling":"none","key":"BSH.Common.Root.SelectedProgram","level":"hint","timestamp":1676897836,"uri":"/api/homeappliances/SIEMENS-WM14T6H9NL-AB1234567890/programs/selected","value":"LaundryCare.Washer.Program.DelicatesSilk"}]}\nid:SIEMENS-WM14T6H9NL-AB1234567890\n\n',
+    b'event:NOTIFY\ndata:{"haId":"SIEMENS-WM14T6H9NL-AB1234567890","items":[{"handling":"none","key":"LaundryCare.Washer.Option.SpinSpeed","level":"hint","timestamp":1676897836,"uri":"/api/homeappliances/SIEMENS-WM14T6H9NL-AB1234567890/programs/selected/options/LaundryCare.Washer.Option.SpinSpeed","value":"LaundryCare.Washer.EnumType.SpinSpeed.RPM600"},{"handling":"none","key":"LaundryCare.Washer.Option.Temperature","level":"hint","timestamp":1676897836,"uri":"/api/homeappliances/SIEMENS-WM14T6H9NL-AB1234567890/programs/selected/options/LaundryCare.Washer.Option.Temperature","value":"LaundryCare.Washer.EnumType.Temperature.GC30"}]}\nid:SIEMENS-WM14T6H9NL-AB1234567890\n\n',
+    b'event:NOTIFY\ndata:{"haId":"SIEMENS-WM14T6H9NL-AB1234567890","items":[{"handling":"none","key":"BSH.Common.Option.FinishInRelative","level":"hint","timestamp":1676897837,"unit":"seconds","uri":"/api/homeappliances/SIEMENS-WM14T6H9NL-AB1234567890/programs/selected/options/BSH.Common.Option.FinishInRelative","value":2580}]}\nid:SIEMENS-WM14T6H9NL-AB1234567890\n\n',
+    b'event:NOTIFY\ndata:{"haId":"SIEMENS-WM14T6H9NL-AB1234567890","items":[{"handling":"none","key":"BSH.Common.Root.SelectedProgram","level":"hint","timestamp":1676897837,"uri":"/api/homeappliances/SIEMENS-WM14T6H9NL-AB1234567890/programs/selected","value":"LaundryCare.Washer.Program.Wool"}]}\nid:SIEMENS-WM14T6H9NL-AB1234567890\n\n',
+    b'event:NOTIFY\ndata:{"haId":"SIEMENS-WM14T6H9NL-AB1234567890","items":[{"handling":"none","key":"LaundryCare.Washer.Option.SpinSpeed","level":"hint","timestamp":1676897837,"uri":"/api/homeappliances/SIEMENS-WM14T6H9NL-AB1234567890/programs/selected/options/LaundryCare.Washer.Option.SpinSpeed","value":"LaundryCare.Washer.EnumType.SpinSpeed.RPM800"}]}\nid:SIEMENS-WM14T6H9NL-AB1234567890\n\n',
+    b'event:NOTIFY\ndata:{"haId":"SIEMENS-WM14T6H9NL-AB1234567890","items":[{"handling":"none","key":"BSH.Common.Option.FinishInRelative","level":"hint","timestamp":1676897838,"unit":"seconds","uri":"/api/homeappliances/SIEMENS-WM14T6H9NL-AB1234567890/programs/selected/options/BSH.Common.Option.FinishInRelative","value":2400}]}\nid:SIEMENS-WM14T6H9NL-AB1234567890\n\n',
+    b'event:STATUS\ndata:{"haId":"SIEMENS-WM14T6H9NL-AB1234567890","items":[{"handling":"none","key":"BSH.Common.Status.DoorState","level":"hint","timestamp":1676897842,"uri":"/api/homeappliances/SIEMENS-WM14T6H9NL-AB1234567890/status/BSH.Common.Status.DoorState","value":"BSH.Common.EnumType.DoorState.Closed"}]}\nid:SIEMENS-WM14T6H9NL-AB1234567890\n\n',
+    b'event:STATUS\ndata:{"haId":"SIEMENS-WM14T6H9NL-AB1234567890","items":[{"handling":"none","key":"BSH.Common.Status.DoorState","level":"hint","timestamp":1676897845,"uri":"/api/homeappliances/SIEMENS-WM14T6H9NL-AB1234567890/status/BSH.Common.Status.DoorState","value":"BSH.Common.EnumType.DoorState.Open"}]}\nid:SIEMENS-WM14T6H9NL-AB1234567890\n\n',
+    b'event:CONNECTED\ndata:{"haId":"SIEMENS-WT8HXM90NL-AB1234567890","handling":"none","key":"BSH.Common.Appliance.Connected","level":"hint","timestamp":1676897865,"value":true}\nid:SIEMENS-WT8HXM90NL-AB1234567890\n\n',
+    b"event:KEEP-ALIVE\ndata:\n\n",
+    b'event:STATUS\ndata:{"haId":"SIEMENS-WT8HXM90NL-AB1234567890","items":[{"handling":"none","key":"BSH.Common.Status.RemoteControlStartAllowed","level":"hint","timestamp":1676897868,"uri":"/api/homeappliances/SIEMENS-WT8HXM90NL-AB1234567890/status/BSH.Common.Status.RemoteControlStartAllowed","value":false}]}\nid:SIEMENS-WT8HXM90NL-AB1234567890\n\n',
+    b'event:NOTIFY\ndata:{"haId":"SIEMENS-WT8HXM90NL-AB1234567890","items":[{"handling":"none","key":"BSH.Common.Root.ActiveProgram","level":"hint","timestamp":1676897868,"uri":"/api/homeappliances/SIEMENS-WT8HXM90NL-AB1234567890/programs/active","value":null},{"handling":"none","key":"BSH.Common.Root.SelectedProgram","level":"hint","timestamp":1676897868,"uri":"/api/homeappliances/SIEMENS-WT8HXM90NL-AB1234567890/programs/selected","value":"LaundryCare.Dryer.Program.Cotton"}]}\nid:SIEMENS-WT8HXM90NL-AB1234567890\n\n',
+    b"event:KEEP-ALIVE\ndata:\n\n",
+    b"event:KEEP-ALIVE\ndata:\n\n",
+    b'event:DISCONNECTED\ndata:{"haId":"SIEMENS-WM14T6H9NL-AB1234567890","handling":"none","key":"BSH.Common.Appliance.Disconnected","level":"hint","timestamp":1676897981,"value":true}\nid:SIEMENS-WM14T6H9NL-AB1234567890\n\n',
+    b"event:KEEP-ALIVE\ndata:\n\n",
+]
 
 
 JSON_EVENTS = [
@@ -91,6 +89,11 @@ JSON_EVENTS = [
     '{"appliance_id": "SIEMENS-EX877LVV5E-AB1234567890", "event": "STATUS-REQUEST", "timestamp": 1642000633, "data": {"data": {"status": [{"key": "BSH.Common.Status.LocalControlActive", "value": false}, {"key": "BSH.Common.Status.OperationState", "value": "BSH.Common.EnumType.OperationState.Inactive"}, {"key": "BSH.Common.Status.RemoteControlActive", "value": true}]}}}',
     '{"appliance_id": "SIEMENS-TI9553X1RW-AB1234567890", "event": "STATUS-REQUEST", "timestamp": 1674291950, "data": {"data": {"status": [{"key": "BSH.Common.Status.OperationState", "value": "BSH.Common.EnumType.OperationState.Ready"}, {"key": "BSH.Common.Status.RemoteControlStartAllowed", "value": false}, {"key": "BSH.Common.Status.LocalControlActive", "value": false}, {"key": "ConsumerProducts.CoffeeMaker.Status.BeverageCounterRistrettoEspresso", "value": 0}, {"key": "ConsumerProducts.CoffeeMaker.Status.BeverageCounterCoffee", "value": 1}, {"key": "ConsumerProducts.CoffeeMaker.Status.BeverageCounterCoffeeAndMilk", "value": 0}, {"key": "ConsumerProducts.CoffeeMaker.Status.BeverageCounterFrothyMilk", "value": 0}, {"key": "ConsumerProducts.CoffeeMaker.Status.BeverageCounterHotMilk", "value": 0}, {"key": "ConsumerProducts.CoffeeMaker.Status.BeverageCounterHotWater", "value": 0, "unit": "ml"}, {"key": "ConsumerProducts.CoffeeMaker.Status.BeverageCounterPowderCoffee", "value": 1}, {"key": "BSH.Common.Status.DoorState", "value": "BSH.Common.EnumType.DoorState.Closed"}]}}}',
 ]
+
+
+@fixture(scope="function", params=STREAM_EVENTS)
+def stream_event(request) -> bytes:
+    return request.param
 
 
 @fixture(scope="function", params=JSON_EVENTS)
