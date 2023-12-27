@@ -18,3 +18,7 @@ class BaseExporter(metaclass=ABCMeta):
     @abstractmethod
     def export(self, event: HomeConnectEvent) -> None:
         pass
+
+    def bulk_export(self, events: list[HomeConnectEvent]) -> None:
+        for event in events:
+            self.export(event)

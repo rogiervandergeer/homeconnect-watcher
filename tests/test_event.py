@@ -102,6 +102,6 @@ class TestEvent:
     def test_trigger(self, event: HomeConnectEvent) -> None:
         trigger = event.trigger
         if trigger is None:
-            assert event.event in ("DISCONNECTED", "STATUS") or event.is_request
+            assert event.event in ("DISCONNECTED", "STATUS", "KEEP-ALIVE") or event.is_request
         else:
             assert isinstance(trigger, Trigger)
