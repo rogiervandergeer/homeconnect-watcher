@@ -14,7 +14,7 @@ from httpx import StreamError, ReadTimeout, RemoteProtocolError
 
 
 from homeconnect_watcher.client.appliance import HomeConnectAppliance
-from homeconnect_watcher.client.trigger import Trigger
+from homeconnect_watcher.trigger import Trigger
 from homeconnect_watcher.event import HomeConnectEvent
 from homeconnect_watcher.exceptions import HomeConnectRequestError, HomeConnectConnectionClosed, HomeConnectTimeout
 from homeconnect_watcher.utils import Metrics, retry, timeout

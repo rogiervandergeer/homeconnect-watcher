@@ -1,8 +1,9 @@
 from dataclasses import dataclass
+from datetime import datetime
 from json import dumps, loads
 from time import time
 
-from homeconnect_watcher.client.trigger import Trigger
+from homeconnect_watcher.trigger import Trigger
 
 
 @dataclass
@@ -12,6 +13,10 @@ class HomeConnectEvent:
     appliance_id: str | None = None
     data: dict[str, ...] | None = None
     error: dict[str, ...] | None = None
+
+    @property
+    def datetime(self) -> datetime:
+        return datetime.fromtimestamp(self.timestamp)
 
     @classmethod
     def from_request(cls, request: str, appliance_id: str, response: dict[str, ...]) -> "HomeConnectEvent":
@@ -43,7 +48,8 @@ class HomeConnectEvent:
 
     @classmethod
     def from_string(cls, string: str) -> "HomeConnectEvent":
-        return cls(**loads(string))
+        result = cls(**loads(string))
+        return result
 
     @property
     def is_request(self) -> bool:
@@ -52,30 +58,45 @@ class HomeConnectEvent:
     @property
     def items(self) -> dict[str, str | None]:
         """Extract the payload into key/value pairs."""
-        if self.data is not None:
-            if "items" in self.data:  # For STATUS/EVENT/NOTIFY
-                return {item["key"]: item["value"] for item in self.data["items"]}
-            elif "key" in self.data:  # For CONNECTED/DISCONNECTED
-                return {self.data["key"]: self.data["value"]}
-            elif "status" in self.data:  # For STATUS-REQUEST
-                return self.data["status"]
-            elif "settings" in self.data:  # For SETTINGS-REQUEST
-                return self.data["settings"]
+        if self.event == "KEEP-ALIVE":
+            return {}
+        elif self.error_key is not None and len(self.error_key) == 3:  # Error code like 429, 500
+            return {}
         elif self.event == "ACTIVE-PROGRAM-REQUEST":
-            if self.error_key == "SDK.Error.NoProgramActive":
+            if self.error_key in (
+                "SDK.Error.NoProgramActive",
+                "SDK.Error.HomeAppliance.Connection.Initialization.Failed",
+            ):
                 return {"BSH.Common.Root.ActiveProgram": None}
             else:
                 result = {item["key"]: item["value"] for item in self.data["options"]}
                 result["BSH.Common.Root.ActiveProgram"] = self.data["key"]
                 return result
         elif self.event == "SELECTED-PROGRAM-REQUEST":
-            if self.error_key == "SDK.Error.NoProgramSelected":
+            if self.error_key in (
+                "SDK.Error.NoProgramSelected",
+                "SDK.Error.HomeAppliance.Connection.Initialization.Failed",
+            ):
                 return {"BSH.Common.Root.SelectedProgram": None}
             else:
                 result = {item["key"]: item["value"] for item in self.data["options"]}
                 result["BSH.Common.Root.SelectedProgram"] = self.data["key"]
                 return result
-        return {}
+        elif self.error is not None:
+            return {}
+        elif self.event == "STATUS-REQUEST":
+            return {entry["key"]: entry["value"] for entry in self.data["status"]}
+        elif self.event == "SETTINGS-REQUEST":
+            return {entry["key"]: entry["value"] for entry in self.data["settings"]}
+        elif self.event in ("CONNECTED", "DISCONNECTED"):
+            if self.data is not None and "key" in self.data:
+                return {self.data["key"]: self.data["value"]}
+            else:
+                return {}
+        elif self.data is not None:
+            if "items" in self.data:  # For STATUS/EVENT/NOTIFY
+                return {item["key"]: item["value"] for item in self.data["items"]}
+        raise ValueError("Malformed Event")
 
     @property
     def error_key(self) -> str | None:
