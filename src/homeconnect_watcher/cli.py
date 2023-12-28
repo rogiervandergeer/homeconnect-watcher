@@ -1,4 +1,5 @@
 from asyncio import run as async_run
+from datetime import timedelta
 from pathlib import Path
 from typing import Annotated, Optional
 
@@ -53,7 +54,7 @@ def watch(
     client = (HomeConnectSimulationClient if simulation else HomeConnectClient)(metrics=metrics)
     exporters = []
     if log_path is not None:
-        exporters.append(FileExporter(path=Path(log_path), flush_interval=flush_interval))
+        exporters.append(FileExporter(path=Path(log_path), flush_interval=timedelta(seconds=flush_interval)))
     if db_uri is not None:
         exporters.append(PGExporter(connection_string=db_uri))
     async_run(loop(client, exporters))
