@@ -8,7 +8,7 @@ from homeconnect_watcher.exporter import BaseExporter
 
 
 class PGExporter(BaseExporter):
-    def __init__(self, connection_string: str, refresh_interval: timedelta = timedelta(minutes=2)):
+    def __init__(self, connection_string: str, refresh_interval: timedelta = timedelta(hours=24)):
         super().__init__()
         self.connection_string = connection_string
         self.connection: Connection | None = None
