@@ -70,7 +70,7 @@ data:
 
 #### Status
 
-Status changes (e.g. 'DoorState')
+Status changes (e.g. "DoorState")
 
 ```
 event:STATUS
@@ -80,7 +80,7 @@ id:SIEMENS-WM14T6H9NL-AB1234567890
 
 #### Event
 
-Event (e.g. 'Preheat finished')
+Event (e.g. "Preheat finished")
 
 ```
 event:EVENT
@@ -143,23 +143,23 @@ Status information
 
 ```json
 {
-  'data': {
-    'status': [
+  "data": {
+    "status": [
       {
-        'key': 'BSH.Common.Status.RemoteControlActive',
-        'value': True
+        "key": "BSH.Common.Status.RemoteControlActive",
+        "value": true
       },
       {
-        'key': 'BSH.Common.Status.RemoteControlStartAllowed',
-        'value': False
+        "key": "BSH.Common.Status.RemoteControlStartAllowed",
+        "value": false
       },
       {
-        'key': 'BSH.Common.Status.OperationState',
-        'value': 'BSH.Common.EnumType.OperationState.Run'
+        "key": "BSH.Common.Status.OperationState",
+        "value": "BSH.Common.EnumType.OperationState.Run"
       },
       {
-        'key': 'BSH.Common.Status.DoorState',
-        'value': 'BSH.Common.EnumType.DoorState.Closed'
+        "key": "BSH.Common.Status.DoorState",
+        "value": "BSH.Common.EnumType.DoorState.Closed"
       }
     ]
   }
@@ -172,11 +172,11 @@ Settings information
 
 ```json
 {
-  'data': {
-    'settings': [
+  "data": {
+    "settings": [
       {
-        'key': 'BSH.Common.Setting.PowerState',
-        'value': 'BSH.Common.EnumType.PowerState.On'
+        "key": "BSH.Common.Setting.PowerState",
+        "value": "BSH.Common.EnumType.PowerState.On"
       }
     ]
   }
@@ -188,33 +188,33 @@ Settings information
 
 ```json
 {
-  'data': {
-    'key': 'LaundryCare.Dryer.Program.Cotton',
-    'options': [
+  "data": {
+    "key": "LaundryCare.Dryer.Program.Cotton",
+    "options": [
       {
-        'key': 'LaundryCare.Dryer.Option.DryingTarget',
-        'value': 'LaundryCare.Dryer.EnumType.DryingTarget.CupboardDry',
-        'unit': 'enum'
+        "key": "LaundryCare.Dryer.Option.DryingTarget",
+        "value": "LaundryCare.Dryer.EnumType.DryingTarget.CupboardDry",
+        "unit": "enum"
       },
       {
-        'key': 'BSH.Common.Option.ProgramProgress',
-        'value': 3,
-        'unit': '%'
+        "key": "BSH.Common.Option.ProgramProgress",
+        "value": 3,
+        "unit": "%"
       },
       {
-        'key': 'BSH.Common.Option.RemainingProgramTime',
-        'value': 348,
-        'unit': 'seconds'
+        "key": "BSH.Common.Option.RemainingProgramTime",
+        "value": 348,
+        "unit": "seconds"
       },
       {
-        'key': 'BSH.Common.Option.ElapsedProgramTime',
-        'value': 12,
-        'unit': 'seconds'
+        "key": "BSH.Common.Option.ElapsedProgramTime",
+        "value": 12,
+        "unit": "seconds"
       },
       {
-        'key': 'BSH.Common.Option.Duration',
-        'value': 360,
-        'unit': 'seconds'
+        "key": "BSH.Common.Option.Duration",
+        "value": 360,
+        "unit": "seconds"
       }
     ]
   }
@@ -223,6 +223,7 @@ Settings information
 
 ## Changelog
 
+- 0.0.6 Postgres exporter and sessionization
 - 0.0.5 Clean up
 - 0.0.4 Add timestamp to events
 - 0.0.3 Expose Prometheus metrics
