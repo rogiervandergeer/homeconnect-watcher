@@ -29,5 +29,15 @@ class TestPGExporter:
     def test_event_written(self, exporter: PGExporter, event: HomeConnectEvent):
         with exporter:
             exporter.export(event)
+        with exporter:
+            exporter.cursor.execute("SELECT COUNT(*) FROM events")
+            assert exporter.cursor.fetchone() == (1,)
+
+    def test_no_duplicates(self, exporter: PGExporter, event: HomeConnectEvent):
+        with exporter:
+            exporter.export(event)
+        with exporter:
+            exporter.export(event)
+        with exporter:
             exporter.cursor.execute("SELECT COUNT(*) FROM events")
             assert exporter.cursor.fetchone() == (1,)

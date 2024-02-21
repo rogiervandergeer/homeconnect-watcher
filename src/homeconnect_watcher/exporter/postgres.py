@@ -18,7 +18,7 @@ class PGExporter(BaseExporter):
 
     def __enter__(self) -> "PGExporter":
         self.logger.info("Opening database connection.")
-        self.connection = connect(self.connection_string)
+        self.connection = connect(self.connection_string, autocommit=True)
         self.cursor = self.connection.cursor()
         self._create_table()
         return self
@@ -33,7 +33,7 @@ class PGExporter(BaseExporter):
 
     def export(self, event: HomeConnectEvent) -> None:
         self.cursor.execute(
-            "INSERT INTO events(appliance_id, event, timestamp, data) VALUES (%s, %s, %s, %s)",
+            "INSERT INTO events(appliance_id, event, timestamp, data) VALUES (%s, %s, %s, %s) ON CONFLICT DO NOTHING",
             (event.appliance_id, event.event, event.datetime, dumps(event.items)),
         )
         if datetime.now() > self._next_refresh:
@@ -42,18 +42,19 @@ class PGExporter(BaseExporter):
     def bulk_export(self, events: list[HomeConnectEvent]) -> None:
         data = [(event.appliance_id, event.event, event.datetime, dumps(event.items)) for event in events]
         self.cursor.executemany(
-            "INSERT INTO events(appliance_id, event, timestamp, data) VALUES (%s, %s, %s, %s)", data
+            "INSERT INTO events(appliance_id, event, timestamp, data) VALUES (%s, %s, %s, %s) ON CONFLICT DO NOTHING",
+            data,
         )
 
     def _create_table(self) -> None:
         self.cursor.execute(
             """
 CREATE TABLE IF NOT EXISTS events (
-    event_id bigserial PRIMARY KEY,
     appliance_id char(31),
     event varchar(31) NOT NULL,
     timestamp timestamp NOT NULL,
-    data jsonb NOT NULL
+    data jsonb NOT NULL,
+    PRIMARY KEY (appliance_id, event, timestamp)
 );
 """
         )
