@@ -66,11 +66,17 @@ def load(
     log_path: Annotated[Optional[str], Argument(envvar="HOMECONNECT_PATH")] = None,
     clean: bool = False,
 ):
-    with PGExporter(connection_string=db_uri) as exporter:
-        if clean:
+    exporter = PGExporter(connection_string=db_uri)
+    if clean:
+        with exporter:
             clean_schema(connection=exporter.connection)
+    with exporter:
+        count_before = exporter.event_count
+        n_events = 0
         for events in read_events(Path(log_path)):
+            n_events += len(events)
             exporter.bulk_export(events)
+        print(f"Added {exporter.event_count - count_before} of {n_events} events.")
 
 
 @app.command()
@@ -79,3 +85,11 @@ def views(
 ):
     with PGExporter(connection_string=db_uri) as exporter:
         create_views(exporter.connection, drop=True, views=load_views())
+
+
+@app.command()
+def refresh_view(
+    db_uri: Annotated[Optional[str], Argument(envvar="HCW_DB_URI")] = None,
+):
+    with PGExporter(connection_string=db_uri) as exporter:
+        exporter.cursor.execute("REFRESH MATERIALIZED VIEW sessions;")
