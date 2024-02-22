@@ -31,16 +31,22 @@ class PGExporter(BaseExporter):
         self.logger.info("Database connection closed.")
         return
 
+    @property
+    def event_count(self) -> int:
+        self.cursor.execute("SELECT COUNT(*) AS cnt FROM events")
+        result = self.cursor.fetchone()
+        return result[0]
+
     def export(self, event: HomeConnectEvent) -> None:
         self.cursor.execute(
             "INSERT INTO events(appliance_id, event, timestamp, data) VALUES (%s, %s, %s, %s) ON CONFLICT DO NOTHING",
-            (event.appliance_id, event.event, event.datetime, dumps(event.items)),
+            (event.appliance_id or "", event.event, event.datetime, dumps(event.items)),
         )
         if datetime.now() > self._next_refresh:
             self._refresh_view()
 
     def bulk_export(self, events: list[HomeConnectEvent]) -> None:
-        data = [(event.appliance_id, event.event, event.datetime, dumps(event.items)) for event in events]
+        data = [(event.appliance_id or "", event.event, event.datetime, dumps(event.items)) for event in events]
         self.cursor.executemany(
             "INSERT INTO events(appliance_id, event, timestamp, data) VALUES (%s, %s, %s, %s) ON CONFLICT DO NOTHING",
             data,
