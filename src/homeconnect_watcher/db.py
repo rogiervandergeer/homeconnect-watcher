@@ -13,7 +13,10 @@ def create_views(connection: Connection, views: dict[str, str], drop: bool = Tru
     with connection.cursor() as cursor:
         if drop:
             for view in reversed(views.keys()):
-                cursor.execute(f"DROP VIEW IF EXISTS {view};")
+                if view == "sessions":
+                    cursor.execute(f"DROP MATERIALIZED VIEW IF EXISTS {view};")
+                else:
+                    cursor.execute(f"DROP VIEW IF EXISTS {view};")
         for name, sql in views.items():
             cursor.execute(sql)
 
