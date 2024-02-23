@@ -74,7 +74,7 @@ Status changes (e.g. "DoorState")
 
 ```
 event:STATUS
-data:{"haId":"SIEMENS-WM14T6H9NL-AB1234567890","items":[{"handling":"none","key":"BSH.Common.Status.LocalControlActive","level":"hint","timestamp":1676897835,"uri":"/api/homeappliances/SIEMENS-WM14T6H9NL-68A40E2B0549/status/BSH.Common.Status.LocalControlActive","value":true},{"handling":"none","key":"BSH.Common.Status.RemoteControlActive","level":"hint","timestamp":1676897835,"uri":"/api/homeappliances/SIEMENS-WM14T6H9NL-AB1234567890/status/BSH.Common.Status.RemoteControlActive","value":false}]}
+data:{"haId":"SIEMENS-WM14T6H9NL-AB1234567890","items":[{"handling":"none","key":"BSH.Common.Status.LocalControlActive","level":"hint","timestamp":1676897835,"uri":"/api/homeappliances/SIEMENS-WM14T6H9NL-AB1234567890/status/BSH.Common.Status.LocalControlActive","value":true},{"handling":"none","key":"BSH.Common.Status.RemoteControlActive","level":"hint","timestamp":1676897835,"uri":"/api/homeappliances/SIEMENS-WM14T6H9NL-AB1234567890/status/BSH.Common.Status.RemoteControlActive","value":false}]}
 id:SIEMENS-WM14T6H9NL-AB1234567890
 ```
 
@@ -115,7 +115,7 @@ Connection to home appliance lost or not possible
 ```
 event:DISCONNECTED
 data:{"haId":"SIEMENS-WM14T6H9NL-AB1234567890","handling":"none","key":"BSH.Common.Appliance.Disconnected","level":"hint","timestamp":1676897981,"value":true}
-id:SIEMENS-WM14T6H9NL-68A40E2B0549
+id:SIEMENS-WM14T6H9NL-AB1234567890
 ```
 
 #### Paired
@@ -220,10 +220,3 @@ Settings information
   }
 }
 ```
-
-## Changelog
-
-- 0.0.6 Postgres exporter and sessionization
-- 0.0.5 Clean up
-- 0.0.4 Add timestamp to events
-- 0.0.3 Expose Prometheus metrics
