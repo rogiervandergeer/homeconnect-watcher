@@ -67,7 +67,7 @@ CREATE TABLE IF NOT EXISTS events (
 
     def _refresh_view(self) -> None:
         try:
-            self.cursor.execute(f"REFRESH MATERIALIZED VIEW sessions;")
+            self.cursor.execute("REFRESH MATERIALIZED VIEW sessions;")
             self.logger.info("Successfully refreshed the sessions view.")
         except UndefinedTable:
             self.logger.error("Failed to refresh the sessions view.")

@@ -2,16 +2,16 @@
 
 Python service that listens to HomeConnect event and logs them.
 
-![GitHub Workflow Status](https://img.shields.io/github/actions/workflow/status/rogiervandergeer/homeconnect-watcher/ci.yaml?branch=main) 
+![GitHub Workflow Status](https://img.shields.io/github/actions/workflow/status/rogiervandergeer/homeconnect-watcher/ci.yaml?branch=main)
 ![PyPI](https://img.shields.io/pypi/v/homeconnect-watcher)
 ![PyPI - License](https://img.shields.io/pypi/l/homeconnect-watcher)
-![PyPI - Downloads](https://img.shields.io/pypi/dm/homeconnect-watcher) 
+![PyPI - Downloads](https://img.shields.io/pypi/dm/homeconnect-watcher)
 
 
 ## Usage
 
-Before you start, create a developer account at https://developer.home-connect.com/ and 
-register an application with the "Authorization Code Grant Flow" as OAuth Flow 
+Before you start, create a developer account at https://developer.home-connect.com/ and
+register an application with the "Authorization Code Grant Flow" as OAuth Flow
 and `http://localhost:8000/code/` as redirect URL.
 
 Next, set the following environment variables with the values of your application:
@@ -31,7 +31,7 @@ If the watcher is used regularly, this only needs to be done once.
 
 ### Watching
 
-Next up, run 
+Next up, run
 
 ```
 homeconnect-watcher watch

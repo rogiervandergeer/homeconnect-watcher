@@ -1,0 +1,27 @@
+fail_fast: false
+repos:
+  - repo: https://github.com/pre-commit/pre-commit-hooks
+    rev: v3.4.0
+    hooks:
+      - id: trailing-whitespace
+      - id: end-of-file-fixer
+      - id: check-docstring-first
+      - id: debug-statements
+      - id: check-yaml
+      - id: check-ast
+      - id: check-json
+      - id: pretty-format-json
+        args: [--autofix]
+  - repo: https://github.com/astral-sh/ruff-pre-commit
+    rev: v0.1.5
+    hooks:
+      - id: ruff
+        args: [--fix, --exit-non-zero-on-fix]
+      - id: ruff-format
+  - repo: local
+    hooks:
+    -   id: serial-check
+        name: Serial Check
+        entry: SIEMENS-[A-Z0-9]-(?!AB1234567890)[A-Z0-9]
+        language: pygrep
+        types: [text]

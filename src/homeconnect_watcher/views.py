@@ -21,7 +21,7 @@ WITH actv AS (
     WHERE appliance_id IS NOT NULL
 )
 
-SELECT 
+SELECT
     event_id,
     appliance_id,
     event,
@@ -29,7 +29,7 @@ SELECT
     data,
     COALESCE(is_active, FIRST_VALUE(is_active) OVER (PARTITION BY appliance_id, grp ORDER BY timestamp, event_id), FALSE) AS is_active
 FROM (
-    SELECT 
+    SELECT
         *,
         COUNT(is_active) OVER (PARTITION BY appliance_id ORDER BY timestamp, event_id) as grp
     FROM actv
@@ -69,14 +69,14 @@ SELECT * FROM with_session_id
 CREATE OR REPLACE VIEW session_ids AS
 
 WITH with_program AS (
-  SELECT 
+  SELECT
     *,
     COALESCE(
         data->>'BSH.Common.Root.ActiveProgram',
         FIRST_VALUE(data->>'BSH.Common.Root.ActiveProgram') OVER (PARTITION BY appliance_id, session_id ORDER BY timestamp, event_id)
     ) AS active_program
   FROM (
-     SELECT 
+     SELECT
        *,
        COUNT(data->>'BSH.Common.Root.ActiveProgram') OVER (PARTITION BY appliance_id, session_id ORDER BY timestamp, event_id) as grp
      FROM active_sessions
@@ -114,7 +114,7 @@ SELECT * FROM with_session_id WHERE session_id > 0
     """
 CREATE OR REPLACE VIEW sessions AS
 
-SELECT 
+SELECT
   appliance_id,
   session_id,
   MIN(timestamp) AS trigger_time,
@@ -123,12 +123,12 @@ SELECT
   MIN(program) AS program,
   jsonb_object_agg(xkey, xvalue) AS agg_data
 FROM (
-  SELECT 
+  SELECT
     appliance_id,
     session_id,
     timestamp,
     CASE
-      WHEN 
+      WHEN
         data->>'BSH.Common.Status.OperationState' = 'BSH.Common.EnumType.OperationState.Run'
         OR (
           data->>'BSH.Common.Option.RemainingProgramTime' IS NOT NULL
@@ -136,8 +136,8 @@ FROM (
         )
       THEN timestamp
     END AS run_timestamp,
-    REVERSE(SPLIT_PART(REVERSE(data->>'BSH.Common.Root.ActiveProgram'), '.', 1)) AS program, 
-    jsonb_each.key AS xkey, 
+    REVERSE(SPLIT_PART(REVERSE(data->>'BSH.Common.Root.ActiveProgram'), '.', 1)) AS program,
+    jsonb_each.key AS xkey,
     jsonb_each.value AS xvalue
   FROM session_ids, jsonb_each(data)
   WHERE is_active
