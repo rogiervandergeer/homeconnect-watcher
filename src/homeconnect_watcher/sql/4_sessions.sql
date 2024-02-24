@@ -7,7 +7,7 @@ SELECT
   COALESCE(MIN(run_timestamp), MIN(timestamp)) AS start_time,
   MAX(timestamp) AS end_time,
   MIN(program) AS program,
-  jsonb_object_agg(xkey, xvalue) AS agg_data
+  jsonb_object_agg(xkey, xvalue) AS session_details
 FROM (
   SELECT
     appliance_id,
