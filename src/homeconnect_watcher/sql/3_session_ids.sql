@@ -12,7 +12,7 @@ WITH with_program AS (
        *,
        COUNT(data->>'BSH.Common.Root.ActiveProgram') OVER (PARTITION BY appliance_id, session_id ORDER BY timestamp, event) as grp
      FROM active_sessions
-  )
+  ) AS subquery
 ),
 
 with_session_start AS (

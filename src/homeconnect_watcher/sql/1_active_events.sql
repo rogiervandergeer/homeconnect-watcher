@@ -37,4 +37,4 @@ FROM (
         *,
         COUNT(is_active) OVER (PARTITION BY appliance_id ORDER BY timestamp, event) as grp
     FROM actv
-)
+) AS subquery

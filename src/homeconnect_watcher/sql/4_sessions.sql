@@ -28,5 +28,5 @@ FROM (
   FROM session_ids, jsonb_each(data)
   WHERE is_active
   ORDER BY timestamp ASC
-) subquery
+) AS subquery
 GROUP BY appliance_id, session_id
