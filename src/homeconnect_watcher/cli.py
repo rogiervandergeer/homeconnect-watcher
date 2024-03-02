@@ -10,7 +10,8 @@ from uvicorn import run
 
 from homeconnect_watcher.api import loop
 from homeconnect_watcher.client.client import HomeConnectSimulationClient, HomeConnectClient
-from homeconnect_watcher.db import clean_schema, create_views, load_views
+from homeconnect_watcher.db import WatcherDBClient
+from homeconnect_watcher.db.utils import clean_schema
 from homeconnect_watcher.exporter.file import FileExporter
 from homeconnect_watcher.exporter.postgres import PGExporter
 from homeconnect_watcher.read import read_events
@@ -80,16 +81,15 @@ def load(
 
 
 @app.command()
-def views(
-    db_uri: Annotated[Optional[str], Argument(envvar="HCW_DB_URI")] = None,
-):
-    with PGExporter(connection_string=db_uri) as exporter:
-        create_views(exporter.connection, drop=True, views=load_views())
+def views(db_uri: Annotated[Optional[str], Argument(envvar="HCW_DB_URI")] = None, drop: bool = False):
+    with WatcherDBClient(connection_string=db_uri, init=False) as client:
+        with client.connection.transaction():
+            if drop:
+                client.drop_views()
+            client.create_views()
 
 
 @app.command()
-def refresh_view(
-    db_uri: Annotated[Optional[str], Argument(envvar="HCW_DB_URI")] = None,
-):
-    with PGExporter(connection_string=db_uri) as exporter:
-        exporter.cursor.execute("REFRESH MATERIALIZED VIEW sessions;")
+def refresh_view(db_uri: Annotated[Optional[str], Argument(envvar="HCW_DB_URI")] = None):
+    with WatcherDBClient(connection_string=db_uri) as client:
+        client.refresh_views()

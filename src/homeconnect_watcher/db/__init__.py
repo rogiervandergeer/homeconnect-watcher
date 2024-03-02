@@ -1,3 +1,3 @@
-from .utils import create_views, clean_schema, load_views
+from .client import WatcherDBClient
 
-__all__ = ["create_views", "clean_schema", "load_views"]
+__all__ = ["WatcherDBClient"]

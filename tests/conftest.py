@@ -6,6 +6,7 @@ from pytest_asyncio import fixture as async_fixture
 
 from homeconnect_watcher.client import HomeConnectClient, HomeConnectAppliance
 from homeconnect_watcher.client.client import HomeConnectSimulationClient
+from homeconnect_watcher.db import WatcherDBClient
 from homeconnect_watcher.event import HomeConnectEvent
 
 
@@ -103,3 +104,12 @@ def stream_event(request) -> bytes:
 @fixture(scope="function", params=JSON_EVENTS)
 def event(request) -> HomeConnectEvent:
     return HomeConnectEvent.from_string(request.param)
+
+
+@fixture(scope="function")
+def db_client(postgresql) -> WatcherDBClient:
+    client = WatcherDBClient(
+        connection_string=f"postgresql://{postgresql.info.user}:@{postgresql.info.host}:{postgresql.info.port}/{postgresql.info.dbname}"
+    )
+    with client:
+        yield client

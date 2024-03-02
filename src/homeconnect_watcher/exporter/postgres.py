@@ -1,74 +1,26 @@
-from json import dumps
 from datetime import datetime, timedelta
-from psycopg import Connection, Cursor, connect
-from psycopg.errors import UndefinedTable
 
 from homeconnect_watcher.event import HomeConnectEvent
 from homeconnect_watcher.exporter import BaseExporter
+from homeconnect_watcher.db import WatcherDBClient
 
 
-class PGExporter(BaseExporter):
-    def __init__(self, connection_string: str, refresh_interval: timedelta = timedelta(hours=24)):
-        super().__init__()
-        self.connection_string = connection_string
-        self.connection: Connection | None = None
-        self.cursor: Cursor | None = None
+class PGExporter(BaseExporter, WatcherDBClient):
+    def __init__(self, connection_string: str, refresh_interval: timedelta = timedelta(hours=6)):
+        WatcherDBClient.__init__(self, connection_string=connection_string)
+        BaseExporter.__init__(self)
         self.refresh_interval = refresh_interval
         self._next_refresh: datetime = datetime.now() + self.refresh_interval
 
     def __enter__(self) -> "PGExporter":
-        self.logger.info("Opening database connection.")
-        self.connection = connect(self.connection_string, autocommit=True)
-        self.cursor = self.connection.cursor()
-        self._create_table()
+        WatcherDBClient.__enter__(self)
         return self
 
     def __exit__(self, exc_type, exc_val, exc_tb) -> None:
-        self.cursor.close()
-        self.cursor = None
-        self.connection.close()
-        self.connection = None
-        self.logger.info("Database connection closed.")
-        return
-
-    @property
-    def event_count(self) -> int:
-        self.cursor.execute("SELECT COUNT(*) AS cnt FROM events")
-        result = self.cursor.fetchone()
-        return result[0]
+        WatcherDBClient.__exit__(self, exc_type, exc_val, exc_tb)
 
     def export(self, event: HomeConnectEvent) -> None:
-        self.cursor.execute(
-            "INSERT INTO events(appliance_id, event, timestamp, data) VALUES (%s, %s, %s, %s) ON CONFLICT DO NOTHING",
-            (event.appliance_id or "", event.event, event.datetime, dumps(event.items)),
-        )
+        self.write_events([event])
         if datetime.now() > self._next_refresh:
-            self._refresh_view()
-
-    def bulk_export(self, events: list[HomeConnectEvent]) -> None:
-        data = [(event.appliance_id or "", event.event, event.datetime, dumps(event.items)) for event in events]
-        self.cursor.executemany(
-            "INSERT INTO events(appliance_id, event, timestamp, data) VALUES (%s, %s, %s, %s) ON CONFLICT DO NOTHING",
-            data,
-        )
-
-    def _create_table(self) -> None:
-        self.cursor.execute(
-            """
-CREATE TABLE IF NOT EXISTS events (
-    appliance_id char(31),
-    event varchar(31) NOT NULL,
-    timestamp timestamp NOT NULL,
-    data jsonb NOT NULL,
-    PRIMARY KEY (appliance_id, event, timestamp)
-);
-"""
-        )
-
-    def _refresh_view(self) -> None:
-        try:
-            self.cursor.execute("REFRESH MATERIALIZED VIEW sessions;")
-            self.logger.info("Successfully refreshed the sessions view.")
-        except UndefinedTable:
-            self.logger.error("Failed to refresh the sessions view.")
-        self._next_refresh: datetime = datetime.now() + self.refresh_interval
+            self.refresh_views()
+            self._next_refresh: datetime = datetime.now() + self.refresh_interval

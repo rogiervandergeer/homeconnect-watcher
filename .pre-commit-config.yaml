@@ -22,6 +22,6 @@ repos:
     hooks:
     -   id: serial-check
         name: Serial Check
-        entry: SIEMENS-[A-Z0-9]-(?!AB1234567890)[A-Z0-9]
+        entry: SIEMENS-[A-Z0-9]+-(?!AB1234567890)[A-Z0-9]+
         language: pygrep
         types: [text]
