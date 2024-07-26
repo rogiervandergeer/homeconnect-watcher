@@ -9,4 +9,4 @@ def test_view_names():
 
 def test_materialized():
     assert not load_view("v_appliances").materialized
-    assert load_view("sessions").materialized
+    assert load_view("v_sessions").materialized
