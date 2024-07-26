@@ -1,5 +1,6 @@
 from datetime import datetime
 from pytest import mark
+from zoneinfo import ZoneInfo
 
 from homeconnect_watcher.db import WatcherDBClient
 
@@ -35,9 +36,9 @@ class TestWasher:
         assert len(result) == 1
         assert result[0] == (
             "SIEMENS-WM14T6H9NL-AB1234567890",
-            datetime(2024, 1, 11, 12, 20, 38).astimezone().astimezone(db_with_events.connection.info.timezone),
-            datetime(2024, 1, 11, 12, 20, 38).astimezone().astimezone(db_with_events.connection.info.timezone),
-            datetime(2024, 1, 11, 14, 27, 20).astimezone().astimezone(db_with_events.connection.info.timezone),
+            datetime(2024, 1, 11, 12, 20, 38).astimezone(ZoneInfo("Europe/Amsterdam")),
+            datetime(2024, 1, 11, 12, 20, 38).astimezone(ZoneInfo("Europe/Amsterdam")),
+            datetime(2024, 1, 11, 14, 27, 20).astimezone(ZoneInfo("Europe/Amsterdam")),
             "Cotton",
         )
 
@@ -120,9 +121,9 @@ class TestWasher:
         assert len(result) == 1
         assert result[0] == (
             "SIEMENS-WM14T6H9NL-AB1234567890",
-            datetime(2024, 2, 8, 10, 1, 12).astimezone().astimezone(db_with_events.connection.info.timezone),
-            datetime(2024, 2, 9, 5, 44, 28).astimezone().astimezone(db_with_events.connection.info.timezone),
-            datetime(2024, 2, 9, 9, 11, 15).astimezone().astimezone(db_with_events.connection.info.timezone),
+            datetime(2024, 2, 8, 10, 1, 12).astimezone(ZoneInfo("Europe/Amsterdam")),
+            datetime(2024, 2, 9, 5, 44, 28).astimezone(ZoneInfo("Europe/Amsterdam")),
+            datetime(2024, 2, 9, 9, 11, 15).astimezone(ZoneInfo("Europe/Amsterdam")),
             "CottonEco",
         )
 
