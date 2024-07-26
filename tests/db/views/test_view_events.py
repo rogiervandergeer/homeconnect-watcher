@@ -15,7 +15,9 @@ def test_single_event(db_with_events: WatcherDBClient):
     assert result[0] == (
         "SIEMENS-WM14T6H9NL-AB1234567890",
         "ProgramFinished",
-        datetime(2023, 12, 24, 9, 25, 3).astimezone(ZoneInfo("Europe/Amsterdam")),
+        datetime(2023, 12, 24, 9, 25, 3, tzinfo=ZoneInfo("Europe/Amsterdam")).astimezone(
+            db_with_events.connection.info.timezone
+        ),
         None,
     )
 
@@ -34,14 +36,20 @@ def test_multiple_appliances(db_with_events: WatcherDBClient):
     assert result[0] == (
         "SIEMENS-WM14T6H9NL-AB1234567890",
         "ProgramFinished",
-        datetime(2023, 12, 24, 9, 25, 3).astimezone(ZoneInfo("Europe/Amsterdam")),
+        datetime(2023, 12, 24, 9, 25, 3, tzinfo=ZoneInfo("Europe/Amsterdam")).astimezone(
+            db_with_events.connection.info.timezone
+        ),
         None,
     )
     assert result[1] == (
         "SIEMENS-EX877LVV5E-AB1234567890",
         "ProgramFinished",
-        datetime(2023, 12, 24, 11, 6, 54).astimezone(ZoneInfo("Europe/Amsterdam")),
-        datetime(2023, 12, 24, 11, 7, 3).astimezone(ZoneInfo("Europe/Amsterdam")),
+        datetime(2023, 12, 24, 11, 6, 54, tzinfo=ZoneInfo("Europe/Amsterdam")).astimezone(
+            db_with_events.connection.info.timezone
+        ),
+        datetime(2023, 12, 24, 11, 7, 3, tzinfo=ZoneInfo("Europe/Amsterdam")).astimezone(
+            db_with_events.connection.info.timezone
+        ),
     )
 
 
@@ -63,25 +71,39 @@ def test_successive(db_with_events: WatcherDBClient):
     assert result[0] == (
         "SIEMENS-WM14T6H9NL-AB1234567890",
         "ProgramFinished",
-        datetime(2024, 2, 8, 8, 13, 5).astimezone(ZoneInfo("Europe/Amsterdam")),
-        datetime(2024, 2, 8, 8, 18, 11).astimezone(ZoneInfo("Europe/Amsterdam")),
+        datetime(2024, 2, 8, 8, 13, 5, tzinfo=ZoneInfo("Europe/Amsterdam")).astimezone(
+            db_with_events.connection.info.timezone
+        ),
+        datetime(2024, 2, 8, 8, 18, 11, tzinfo=ZoneInfo("Europe/Amsterdam")).astimezone(
+            db_with_events.connection.info.timezone
+        ),
     )
     assert result[1] == (
         "SIEMENS-TI9553X1RW-AB1234567890",
         "DripTrayFull",
-        datetime(2024, 2, 8, 8, 30, 25).astimezone(ZoneInfo("Europe/Amsterdam")),
-        datetime(2024, 2, 8, 8, 36, 8).astimezone(ZoneInfo("Europe/Amsterdam")),
+        datetime(2024, 2, 8, 8, 30, 25, tzinfo=ZoneInfo("Europe/Amsterdam")).astimezone(
+            db_with_events.connection.info.timezone
+        ),
+        datetime(2024, 2, 8, 8, 36, 8, tzinfo=ZoneInfo("Europe/Amsterdam")).astimezone(
+            db_with_events.connection.info.timezone
+        ),
     )
     assert result[2] == (
         "SIEMENS-WM14T6H9NL-AB1234567890",
         "ProgramFinished",
-        datetime(2024, 2, 8, 9, 10, 32).astimezone(ZoneInfo("Europe/Amsterdam")),
-        datetime(2024, 2, 8, 9, 12, 24).astimezone(ZoneInfo("Europe/Amsterdam")),
+        datetime(2024, 2, 8, 9, 10, 32, tzinfo=ZoneInfo("Europe/Amsterdam")).astimezone(
+            db_with_events.connection.info.timezone
+        ),
+        datetime(2024, 2, 8, 9, 12, 24, tzinfo=ZoneInfo("Europe/Amsterdam")).astimezone(
+            db_with_events.connection.info.timezone
+        ),
     )
     assert result[3] == (
         "SIEMENS-WM14T6H9NL-AB1234567890",
         "ProgramFinished",
-        datetime(2024, 2, 8, 9, 51, 15).astimezone(ZoneInfo("Europe/Amsterdam")),
+        datetime(2024, 2, 8, 9, 51, 15, tzinfo=ZoneInfo("Europe/Amsterdam")).astimezone(
+            db_with_events.connection.info.timezone
+        ),
         None,
     )
 
@@ -99,6 +121,10 @@ def test_end_by_disconnect(db_with_events: WatcherDBClient):
     assert result[0] == (
         "SIEMENS-WM14T6H9NL-AB1234567890",
         "ProgramFinished",
-        datetime(2024, 2, 9, 9, 11, 17).astimezone(ZoneInfo("Europe/Amsterdam")),
-        datetime(2024, 2, 9, 15, 56, 15).astimezone(ZoneInfo("Europe/Amsterdam")),
+        datetime(2024, 2, 9, 9, 11, 17, tzinfo=ZoneInfo("Europe/Amsterdam")).astimezone(
+            db_with_events.connection.info.timezone
+        ),
+        datetime(2024, 2, 9, 15, 56, 15, tzinfo=ZoneInfo("Europe/Amsterdam")).astimezone(
+            db_with_events.connection.info.timezone
+        ),
     )
