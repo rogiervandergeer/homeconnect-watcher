@@ -45,7 +45,11 @@ with_improved_session_start AS (
     SELECT
         *,
         (
-            (is_active AND (lag(is_active) OVER (PARTITION BY appliance_id ORDER BY timestamp, event) = false))
+            (
+                is_active
+                AND (lag(is_active) OVER (PARTITION BY appliance_id ORDER BY timestamp, event) = false)
+                AND (lag(timestamp) OVER (PARTITION BY appliance_id ORDER BY timestamp, event) < timestamp)
+            )
             OR
             (active_program != (lag(active_program) OVER (PARTITION BY appliance_id ORDER BY timestamp, event)))
             OR

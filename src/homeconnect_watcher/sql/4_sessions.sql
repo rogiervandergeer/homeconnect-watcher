@@ -16,10 +16,6 @@ FROM (
     CASE
       WHEN
         data->>'BSH.Common.Status.OperationState' = 'BSH.Common.EnumType.OperationState.Run'
-        OR (
-          data->>'BSH.Common.Option.RemainingProgramTime' IS NOT NULL
-          AND data->>'BSH.Common.Option.FinishInRelative' IS NULL
-        )
       THEN timestamp
     END AS run_timestamp,
     reverse(split_part(reverse(data->>'BSH.Common.Root.ActiveProgram'), '.', 1)) AS program,
