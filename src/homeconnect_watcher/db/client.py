@@ -46,7 +46,7 @@ class WatcherDBClient:
 CREATE TABLE IF NOT EXISTS events (
     appliance_id char(31),
     event varchar(31) NOT NULL,
-    timestamp timestamp NOT NULL,
+    timestamp timestamp with time zone NOT NULL,
     data jsonb NOT NULL,
     PRIMARY KEY (appliance_id, event, timestamp)
 );

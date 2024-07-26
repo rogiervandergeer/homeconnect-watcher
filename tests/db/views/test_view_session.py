@@ -35,9 +35,9 @@ class TestWasher:
         assert len(result) == 1
         assert result[0] == (
             "SIEMENS-WM14T6H9NL-AB1234567890",
-            datetime(2024, 1, 11, 12, 20, 38),
-            datetime(2024, 1, 11, 12, 20, 38),
-            datetime(2024, 1, 11, 14, 27, 20),
+            datetime(2024, 1, 11, 12, 20, 38).astimezone(),
+            datetime(2024, 1, 11, 12, 20, 38).astimezone(),
+            datetime(2024, 1, 11, 14, 27, 20).astimezone(),
             "Cotton",
         )
 
@@ -120,9 +120,9 @@ class TestWasher:
         assert len(result) == 1
         assert result[0] == (
             "SIEMENS-WM14T6H9NL-AB1234567890",
-            datetime(2024, 2, 8, 10, 1, 12),
-            datetime(2024, 2, 9, 5, 44, 28),
-            datetime(2024, 2, 9, 9, 11, 15),
+            datetime(2024, 2, 8, 10, 1, 12).astimezone(),
+            datetime(2024, 2, 9, 5, 44, 28).astimezone(),
+            datetime(2024, 2, 9, 9, 11, 15).astimezone(),
             "CottonEco",
         )
 

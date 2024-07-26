@@ -16,7 +16,7 @@ class HomeConnectEvent:
 
     @property
     def datetime(self) -> datetime:
-        return datetime.fromtimestamp(self.timestamp)
+        return datetime.fromtimestamp(self.timestamp).astimezone()
 
     @classmethod
     def from_request(cls, request: str, appliance_id: str, response: dict[str, ...]) -> "HomeConnectEvent":
