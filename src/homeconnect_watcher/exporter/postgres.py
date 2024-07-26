@@ -24,3 +24,9 @@ class PGExporter(BaseExporter, WatcherDBClient):
         if datetime.now() > self._next_refresh:
             self.refresh_views()
             self._next_refresh: datetime = datetime.now() + self.refresh_interval
+
+    def bulk_export(self, events: list[HomeConnectEvent]) -> None:
+        self.write_events(events)
+        if datetime.now() > self._next_refresh:
+            self.refresh_views()
+            self._next_refresh: datetime = datetime.now() + self.refresh_interval
