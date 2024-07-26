@@ -5,7 +5,7 @@ from typing import Annotated, Optional
 
 from fastapi import FastAPI
 from fastapi.responses import Response
-from typer import Argument, Typer
+from typer import Option, Typer
 from uvicorn import run
 
 from homeconnect_watcher.api import loop
@@ -22,7 +22,7 @@ app = Typer()
 
 @app.command()
 def authorize(
-    log_level: LogLevel = Argument(LogLevel.INFO, envvar="HCW_LOGLEVEL"),
+    log_level: LogLevel = Option(LogLevel.INFO, envvar="HCW_LOGLEVEL"),
 ):
     initialize_logging(level=log_level)
     client = HomeConnectClient()
@@ -44,11 +44,11 @@ def authorize(
 @app.command()
 def watch(
     simulation: bool = False,
-    flush_interval: int = Argument(300, envvar="HCW_FLUSH_INTERVAL"),
-    log_level: LogLevel = Argument(LogLevel.INFO, envvar="HCW_LOGLEVEL"),
-    metrics_port: Optional[int] = Argument(None, envvar="HCW_METRICS_PORT"),
-    log_path: Annotated[Optional[str], Argument(envvar="HOMECONNECT_PATH")] = None,
-    db_uri: Annotated[Optional[str], Argument(envvar="HCW_DB_URI")] = None,
+    flush_interval: int = Option(300, envvar="HCW_FLUSH_INTERVAL"),
+    log_level: LogLevel = Option(LogLevel.INFO, envvar="HCW_LOGLEVEL"),
+    metrics_port: Optional[int] = Option(None, envvar="HCW_METRICS_PORT"),
+    log_path: Annotated[Optional[str], Option(envvar="HOMECONNECT_PATH")] = None,
+    db_uri: Annotated[Optional[str], Option(envvar="HCW_DB_URI")] = None,
 ):
     initialize_logging(level=log_level)
     metrics = Metrics(port=metrics_port) if metrics_port else None
@@ -63,8 +63,8 @@ def watch(
 
 @app.command()
 def load(
-    db_uri: Annotated[Optional[str], Argument(envvar="HCW_DB_URI")] = None,
-    log_path: Annotated[Optional[str], Argument(envvar="HOMECONNECT_PATH")] = None,
+    db_uri: Annotated[Optional[str], Option(envvar="HCW_DB_URI")] = None,
+    log_path: Annotated[Optional[str], Option(envvar="HOMECONNECT_PATH")] = None,
     clean: bool = False,
 ):
     exporter = PGExporter(connection_string=db_uri)
@@ -81,7 +81,7 @@ def load(
 
 
 @app.command()
-def views(db_uri: Annotated[Optional[str], Argument(envvar="HCW_DB_URI")] = None, drop: bool = False):
+def views(db_uri: Annotated[Optional[str], Option(envvar="HCW_DB_URI")] = None, drop: bool = False):
     with WatcherDBClient(connection_string=db_uri, init=False) as client:
         with client.connection.transaction():
             if drop:
@@ -90,6 +90,6 @@ def views(db_uri: Annotated[Optional[str], Argument(envvar="HCW_DB_URI")] = None
 
 
 @app.command()
-def refresh_view(db_uri: Annotated[Optional[str], Argument(envvar="HCW_DB_URI")] = None):
+def refresh_view(db_uri: Annotated[Optional[str], Option(envvar="HCW_DB_URI")] = None):
     with WatcherDBClient(connection_string=db_uri) as client:
         client.refresh_views()
