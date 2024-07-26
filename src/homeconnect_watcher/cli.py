@@ -58,7 +58,7 @@ def watch(
         exporters.append(FileExporter(path=Path(log_path), flush_interval=timedelta(seconds=flush_interval)))
     if db_uri is not None:
         exporters.append(PGExporter(connection_string=db_uri))
-    async_run(loop(client, exporters))
+    async_run(loop(client, exporters, metrics=metrics))
 
 
 @app.command()

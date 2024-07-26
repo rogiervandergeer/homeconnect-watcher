@@ -8,6 +8,20 @@ from homeconnect_watcher.event import HomeConnectEvent
 
 
 class Metrics:
+    _event_types = (
+        "ACTIVE-PROGRAM-REQUEST",
+        "CONNECTED",
+        "DEPAIRED",
+        "DISCONNECTED",
+        "EVENT",
+        "NOTIFY",
+        "PAIRED",
+        "SELECTED-PROGRAM-REQUEST",
+        "SETTINGS-REQUEST",
+        "STATUS",
+        "STATUS-REQUEST",
+    )
+
     def __init__(self, port: int):
         self.logger = getLogger(self.__class__.__name__)
         try:
@@ -21,7 +35,9 @@ class Metrics:
         self._start_time = monotonic()
         self._disconnects = Counter("disconnects", "The number of time the connection failed.", ["reason"])
         self._disconnects.labels(reason="timeout")
+        self._disconnects.labels(reason="closed")
         self._events = Counter("events", "Number of events.", ["appliance_id", "event"])
+        self._events.labels(appliance_id=None, event="KEEP-ALIVE")
         self._info = Info("version", "Version info.")
         self._info.info({"version": __version__})
         self._last_event = Gauge("last_event", "Time since last event.")
@@ -31,6 +47,10 @@ class Metrics:
         self._token_refresh = Counter("token_refresh", "The number of times the token was refreshed.")
         self.logger.info(f"Exposing prometheus metrics on port {port}.")
         start_http_server(port)
+
+    def init_labels(self, appliance_id: str) -> None:
+        for event_type in self._event_types:
+            self._events.labels(appliance_id=appliance_id, event=event_type)
 
     def increment_disconnects(self, reason: str) -> None:
         self._disconnects.labels(reason=reason).inc()
