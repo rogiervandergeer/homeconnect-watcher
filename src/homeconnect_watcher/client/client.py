@@ -192,17 +192,19 @@ class HomeConnectClient:
         if trigger is None:
             return
         appliance = await self.get_appliance(trigger.appliance_id)
-        if trigger.interval and appliance.time_since_update < 300:
-            return  # If the trigger is an interval trigger, only do requests if last requests were 5 minutes ago.
         if trigger.status:
-            yield await appliance.get_status()
+            if not trigger.interval or appliance.time_since_update("status") >= 300:
+                yield await appliance.get_status()
         if trigger.settings:
-            yield await appliance.get_settings()
+            if not trigger.interval or appliance.time_since_update("settings") >= 300:
+                yield await appliance.get_settings()
         if await appliance.get_available_programs():  # Only if the appliance supports programs.
             if trigger.active_program:
-                yield await appliance.get_active_program()
+                if not trigger.interval or appliance.time_since_update("active_program") >= 300:
+                    yield await appliance.get_active_program()
             if trigger.selected_program:
-                yield await appliance.get_selected_program()
+                if not trigger.interval or appliance.time_since_update("selected_program") >= 300:
+                    yield await appliance.get_selected_program()
 
     def _load_token(self) -> OAuth2Token | None:
         """Load the OAuth token from file."""
