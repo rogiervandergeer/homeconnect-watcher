@@ -16,7 +16,7 @@ class TestPGExporter:
         return HomeConnectEvent(
             appliance_id="SIEMENS-EX877LVV5E-AB1234567890",
             event="STATUS-REQUEST",
-            timestamp=1641970292,
+            timestamp=1641970292.0,
             data={
                 "status": [
                     {"key": "BSH.Common.Status.LocalControlActive", "value": False},
