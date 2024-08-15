@@ -6,7 +6,7 @@ from homeconnect_watcher.db import WatcherDBClient
 
 
 @mark.events(
-    """{"appliance_id": "SIEMENS-WM14T6H9NL-AB1234567890", "event": "EVENT", "timestamp": 1703406303, "data": {"haId": "SIEMENS-WM14T6H9NL-AB1234567890", "items": [{"handling": "acknowledge", "key": "BSH.Common.Event.ProgramFinished", "level": "hint", "timestamp": 1703406303, "value": "BSH.Common.EnumType.EventPresentState.Present"}]}}"""
+    """{"appliance_id": "SIEMENS-WM14T6H9NL-AB1234567890", "event": "EVENT", "timestamp": 1703406303.0.0.1, "data": {"haId": "SIEMENS-WM14T6H9NL-AB1234567890", "items": [{"handling": "acknowledge", "key": "BSH.Common.Event.ProgramFinished", "level": "hint", "timestamp": 1703406303.0.0, "value": "BSH.Common.EnumType.EventPresentState.Present"}]}}"""
 )
 def test_single_event(db_with_events: WatcherDBClient):
     db_with_events.cursor.execute("SELECT * FROM v_events")
@@ -15,7 +15,7 @@ def test_single_event(db_with_events: WatcherDBClient):
     assert result[0] == (
         "SIEMENS-WM14T6H9NL-AB1234567890",
         "ProgramFinished",
-        datetime(2023, 12, 24, 9, 25, 3, tzinfo=ZoneInfo("Europe/Amsterdam")).astimezone(
+        datetime(2023, 12, 24, 9, 25, 3, 100000, tzinfo=ZoneInfo("Europe/Amsterdam")).astimezone(
             db_with_events.connection.info.timezone
         ),
         None,
@@ -24,9 +24,9 @@ def test_single_event(db_with_events: WatcherDBClient):
 
 @mark.events(
     """
-{"appliance_id": "SIEMENS-WM14T6H9NL-AB1234567890", "event": "EVENT", "timestamp": 1703406303, "data": {"haId": "SIEMENS-WM14T6H9NL-AB1234567890", "items": [{"handling": "acknowledge", "key": "BSH.Common.Event.ProgramFinished", "level": "hint", "timestamp": 1703406303, "value": "BSH.Common.EnumType.EventPresentState.Present"}]}}
-{"appliance_id": "SIEMENS-EX877LVV5E-AB1234567890", "event": "EVENT", "timestamp": 1703412414, "data": {"haId": "SIEMENS-EX877LVV5E-AB1234567890", "items": [{"handling": "acknowledge", "key": "BSH.Common.Event.ProgramFinished", "level": "hint", "timestamp": 1703412414, "value": "BSH.Common.EnumType.EventPresentState.Present"}]}}
-{"appliance_id": "SIEMENS-EX877LVV5E-AB1234567890", "event": "EVENT", "timestamp": 1703412423, "data": {"haId": "SIEMENS-EX877LVV5E-AB1234567890", "items": [{"handling": "acknowledge", "key": "BSH.Common.Event.ProgramFinished", "level": "hint", "timestamp": 1703412423, "value": "BSH.Common.EnumType.EventPresentState.Off"}]}}
+{"appliance_id": "SIEMENS-WM14T6H9NL-AB1234567890", "event": "EVENT", "timestamp": 1703406303.0.0, "data": {"haId": "SIEMENS-WM14T6H9NL-AB1234567890", "items": [{"handling": "acknowledge", "key": "BSH.Common.Event.ProgramFinished", "level": "hint", "timestamp": 1703406303.0.0, "value": "BSH.Common.EnumType.EventPresentState.Present"}]}}
+{"appliance_id": "SIEMENS-EX877LVV5E-AB1234567890", "event": "EVENT", "timestamp": 1703412414.0.0, "data": {"haId": "SIEMENS-EX877LVV5E-AB1234567890", "items": [{"handling": "acknowledge", "key": "BSH.Common.Event.ProgramFinished", "level": "hint", "timestamp": 1703412414.0.0, "value": "BSH.Common.EnumType.EventPresentState.Present"}]}}
+{"appliance_id": "SIEMENS-EX877LVV5E-AB1234567890", "event": "EVENT", "timestamp": 1703412423.0.0, "data": {"haId": "SIEMENS-EX877LVV5E-AB1234567890", "items": [{"handling": "acknowledge", "key": "BSH.Common.Event.ProgramFinished", "level": "hint", "timestamp": 1703412423.0.0, "value": "BSH.Common.EnumType.EventPresentState.Off"}]}}
 """
 )
 def test_multiple_appliances(db_with_events: WatcherDBClient):
@@ -55,13 +55,13 @@ def test_multiple_appliances(db_with_events: WatcherDBClient):
 
 @mark.events(
     """
-{"appliance_id": "SIEMENS-WM14T6H9NL-AB1234567890", "event": "EVENT", "timestamp": 1707376385, "data": {"haId": "SIEMENS-WM14T6H9NL-AB1234567890", "items": [{"handling": "acknowledge", "key": "BSH.Common.Event.ProgramFinished", "level": "hint", "timestamp": 1707376385, "value": "BSH.Common.EnumType.EventPresentState.Present"}]}}
-{"appliance_id": "SIEMENS-WM14T6H9NL-AB1234567890", "event": "EVENT", "timestamp": 1707376691, "data": {"haId": "SIEMENS-WM14T6H9NL-AB1234567890", "items": [{"handling": "acknowledge", "key": "BSH.Common.Event.ProgramFinished", "level": "hint", "timestamp": 1707376691, "value": "BSH.Common.EnumType.EventPresentState.Off"}]}}
-{"appliance_id": "SIEMENS-TI9553X1RW-AB1234567890", "event": "EVENT", "timestamp": 1707377425, "data": {"haId": "SIEMENS-TI9553X1RW-AB1234567890", "items": [{"handling": "none", "key": "ConsumerProducts.CoffeeMaker.Event.DripTrayFull", "level": "alert", "timestamp": 1707377425, "value": "BSH.Common.EnumType.EventPresentState.Present"}]}}
-{"appliance_id": "SIEMENS-TI9553X1RW-AB1234567890", "event": "EVENT", "timestamp": 1707377768, "data": {"haId": "SIEMENS-TI9553X1RW-AB1234567890", "items": [{"handling": "none", "key": "ConsumerProducts.CoffeeMaker.Event.DripTrayFull", "level": "alert", "timestamp": 1707377768, "value": "BSH.Common.EnumType.EventPresentState.Off"}]}}
-{"appliance_id": "SIEMENS-WM14T6H9NL-AB1234567890", "event": "EVENT", "timestamp": 1707379832, "data": {"haId": "SIEMENS-WM14T6H9NL-AB1234567890", "items": [{"handling": "acknowledge", "key": "BSH.Common.Event.ProgramFinished", "level": "hint", "timestamp": 1707379832, "value": "BSH.Common.EnumType.EventPresentState.Present"}]}}
-{"appliance_id": "SIEMENS-WM14T6H9NL-AB1234567890", "event": "EVENT", "timestamp": 1707379944, "data": {"haId": "SIEMENS-WM14T6H9NL-AB1234567890", "items": [{"handling": "acknowledge", "key": "BSH.Common.Event.ProgramFinished", "level": "hint", "timestamp": 1707379944, "value": "BSH.Common.EnumType.EventPresentState.Off"}]}}
-{"appliance_id": "SIEMENS-WM14T6H9NL-AB1234567890", "event": "EVENT", "timestamp": 1707382275, "data": {"haId": "SIEMENS-WM14T6H9NL-AB1234567890", "items": [{"handling": "acknowledge", "key": "BSH.Common.Event.ProgramFinished", "level": "hint", "timestamp": 1707382275, "value": "BSH.Common.EnumType.EventPresentState.Present"}]}}
+{"appliance_id": "SIEMENS-WM14T6H9NL-AB1234567890", "event": "EVENT", "timestamp": 1707376385.0.0, "data": {"haId": "SIEMENS-WM14T6H9NL-AB1234567890", "items": [{"handling": "acknowledge", "key": "BSH.Common.Event.ProgramFinished", "level": "hint", "timestamp": 1707376385.0.0, "value": "BSH.Common.EnumType.EventPresentState.Present"}]}}
+{"appliance_id": "SIEMENS-WM14T6H9NL-AB1234567890", "event": "EVENT", "timestamp": 1707376691.0.0, "data": {"haId": "SIEMENS-WM14T6H9NL-AB1234567890", "items": [{"handling": "acknowledge", "key": "BSH.Common.Event.ProgramFinished", "level": "hint", "timestamp": 1707376691.0.0, "value": "BSH.Common.EnumType.EventPresentState.Off"}]}}
+{"appliance_id": "SIEMENS-TI9553X1RW-AB1234567890", "event": "EVENT", "timestamp": 1707377425.0.0, "data": {"haId": "SIEMENS-TI9553X1RW-AB1234567890", "items": [{"handling": "none", "key": "ConsumerProducts.CoffeeMaker.Event.DripTrayFull", "level": "alert", "timestamp": 1707377425.0.0, "value": "BSH.Common.EnumType.EventPresentState.Present"}]}}
+{"appliance_id": "SIEMENS-TI9553X1RW-AB1234567890", "event": "EVENT", "timestamp": 1707377768.0.0, "data": {"haId": "SIEMENS-TI9553X1RW-AB1234567890", "items": [{"handling": "none", "key": "ConsumerProducts.CoffeeMaker.Event.DripTrayFull", "level": "alert", "timestamp": 1707377768.0.0, "value": "BSH.Common.EnumType.EventPresentState.Off"}]}}
+{"appliance_id": "SIEMENS-WM14T6H9NL-AB1234567890", "event": "EVENT", "timestamp": 1707379832.0.0, "data": {"haId": "SIEMENS-WM14T6H9NL-AB1234567890", "items": [{"handling": "acknowledge", "key": "BSH.Common.Event.ProgramFinished", "level": "hint", "timestamp": 1707379832.0.0, "value": "BSH.Common.EnumType.EventPresentState.Present"}]}}
+{"appliance_id": "SIEMENS-WM14T6H9NL-AB1234567890", "event": "EVENT", "timestamp": 1707379944.0.0, "data": {"haId": "SIEMENS-WM14T6H9NL-AB1234567890", "items": [{"handling": "acknowledge", "key": "BSH.Common.Event.ProgramFinished", "level": "hint", "timestamp": 1707379944.0.0, "value": "BSH.Common.EnumType.EventPresentState.Off"}]}}
+{"appliance_id": "SIEMENS-WM14T6H9NL-AB1234567890", "event": "EVENT", "timestamp": 1707382275.0.0, "data": {"haId": "SIEMENS-WM14T6H9NL-AB1234567890", "items": [{"handling": "acknowledge", "key": "BSH.Common.Event.ProgramFinished", "level": "hint", "timestamp": 1707382275.0.0, "value": "BSH.Common.EnumType.EventPresentState.Present"}]}}
 """
 )
 def test_successive(db_with_events: WatcherDBClient):
@@ -110,8 +110,8 @@ def test_successive(db_with_events: WatcherDBClient):
 
 @mark.events(
     """
-{"appliance_id": "SIEMENS-WM14T6H9NL-AB1234567890", "event": "EVENT", "timestamp": 1707466277, "data": {"haId": "SIEMENS-WM14T6H9NL-AB1234567890", "items": [{"handling": "acknowledge", "key": "BSH.Common.Event.ProgramFinished", "level": "hint", "timestamp": 1707466277, "value": "BSH.Common.EnumType.EventPresentState.Present"}]}}
-{"appliance_id": "SIEMENS-WM14T6H9NL-AB1234567890", "event": "DISCONNECTED", "timestamp": 1707490575, "data": {"haId": "SIEMENS-WM14T6H9NL-AB1234567890", "handling": "none", "key": "BSH.Common.Appliance.Disconnected", "level": "hint", "timestamp": 1707490575, "value": true}}
+{"appliance_id": "SIEMENS-WM14T6H9NL-AB1234567890", "event": "EVENT", "timestamp": 1707466277.0.0, "data": {"haId": "SIEMENS-WM14T6H9NL-AB1234567890", "items": [{"handling": "acknowledge", "key": "BSH.Common.Event.ProgramFinished", "level": "hint", "timestamp": 1707466277.0.0, "value": "BSH.Common.EnumType.EventPresentState.Present"}]}}
+{"appliance_id": "SIEMENS-WM14T6H9NL-AB1234567890", "event": "DISCONNECTED", "timestamp": 1707490575.0.0, "data": {"haId": "SIEMENS-WM14T6H9NL-AB1234567890", "handling": "none", "key": "BSH.Common.Appliance.Disconnected", "level": "hint", "timestamp": 1707490575.0.0, "value": true}}
 """
 )
 def test_end_by_disconnect(db_with_events: WatcherDBClient):

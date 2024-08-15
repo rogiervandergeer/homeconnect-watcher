@@ -9,7 +9,7 @@ from homeconnect_watcher.trigger import Trigger
 @dataclass
 class HomeConnectEvent:
     event: str
-    timestamp: int
+    timestamp: float
     appliance_id: str | None = None
     data: dict[str, ...] | None = None
     error: dict[str, ...] | None = None
@@ -28,7 +28,7 @@ class HomeConnectEvent:
             error = None
         return HomeConnectEvent(
             event=f"{request}-REQUEST",
-            timestamp=int(time()),
+            timestamp=time(),
             appliance_id=appliance_id,
             data=data,
             error=error,
@@ -36,7 +36,7 @@ class HomeConnectEvent:
 
     @classmethod
     def from_stream(cls, stream: bytes) -> "HomeConnectEvent":
-        data = {"timestamp": int(time())}
+        data = {"timestamp": time()}
         for line in stream.decode("utf-8").split("\n"):
             if line.startswith("data:") and len(line) > 5:
                 data["data"] = loads(line[5:])
