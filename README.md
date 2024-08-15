@@ -7,6 +7,11 @@ Python service that listens to HomeConnect event and logs them.
 ![PyPI - License](https://img.shields.io/pypi/l/homeconnect-watcher)
 ![PyPI - Downloads](https://img.shields.io/pypi/dm/homeconnect-watcher)
 
+## Project Summary
+
+This project attempts to do two things:
+- Listen to the HomeConnect API for events, make requests to gather additional information, and save everything to file and/or a database.
+- Group the events in the database into sessions, summarizing the collected data into programs that ran on the appliance.
 
 ## Usage
 
@@ -34,8 +39,11 @@ If the watcher is used regularly, this only needs to be done once.
 Next up, run
 
 ```
-homeconnect-watcher watch
+homeconnect-watcher watch --log-path ./logs
 ```
+to start watching your appliances and write the logs to "./logs".
+
+To store the logs to a database, provide `--db-uri <uri>` with a uri to a postgres database. This will store all events to the `events` table.
 
 ## Exposing Metrics to Prometheus
 
