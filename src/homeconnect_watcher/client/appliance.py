@@ -15,6 +15,10 @@ class HomeConnectAppliance:
         self.appliance_type = appliance_type
         self._available_programs: list[str] | None = None
         self._last_update: dict[str, float] = dict()
+        # Request types with a deferred fetch already scheduled. Used to
+        # collapse repeated triggers (e.g. a burst of NOTIFYs all wanting
+        # `status`) into a single fetch fired when the throttle expires.
+        self._pending: set[str] = set()
 
     def __repr__(self) -> str:
         return f"HomeConnect{self.appliance_type}(ha_id={repr(self.appliance_id)})"
