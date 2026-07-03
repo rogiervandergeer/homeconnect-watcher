@@ -36,6 +36,7 @@ class Metrics:
         self._disconnects = Counter("disconnects", "The number of time the connection failed.", ["reason"])
         self._disconnects.labels(reason="timeout")
         self._disconnects.labels(reason="closed")
+        self._disconnects.labels(reason="error")
         self._events = Counter("events", "Number of events.", ["appliance_id", "event"])
         self._events.labels(appliance_id=None, event="KEEP-ALIVE")
         self._info = Info("version", "Version info.")

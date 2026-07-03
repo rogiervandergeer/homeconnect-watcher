@@ -1,4 +1,4 @@
-from asyncio import Queue, create_task, sleep
+from asyncio import Queue, Task, create_task, sleep
 from collections.abc import Callable, Coroutine
 from json import load, dump
 from logging import getLogger
@@ -42,6 +42,8 @@ class HomeConnectClient:
         self.client.auth = self.client.token_auth  # Ensure we use token auth for all requests.
         self._appliances: list["HomeConnectAppliance"] | None = None
         self._last_event: int | None = None
+        # Outstanding deferred-fetch tasks, tracked so they are cancelled when watching stops.
+        self._deferred_tasks: set[Task] = set()
         self.metrics = metrics
         if self.metrics:
             self.metrics.set_last_event(lambda: monotonic() - self._last_event if self._last_event else -1)
@@ -112,10 +114,16 @@ class HomeConnectClient:
                 yield event
         finally:
             producer.cancel()
+            for task in list(self._deferred_tasks):
+                task.cancel()
 
     async def _producer(self, queue: "Queue[HomeConnectEvent]", appliance_id: str | None, reconnect_delay: int) -> None:
         """Drive the SSE stream and dispatch triggers onto the shared queue."""
-        await self._initial_triggers(queue=queue, appliance_id=appliance_id)
+        try:
+            await self._initial_triggers(queue=queue, appliance_id=appliance_id)
+        except Exception as e:
+            # Best-effort enrichment: a failure here must not kill the producer.
+            self.logger.warning("Error while handling initial triggers.", exc_info=e)
         while True:
             try:
                 async for event in self._event_stream(appliance_id=appliance_id):
@@ -131,6 +139,14 @@ class HomeConnectClient:
                 self.logger.warning(f"Connection timed out. Reconnecting in {reconnect_delay} seconds.")
                 if self.metrics:
                     self.metrics.increment_disconnects(reason="timeout")
+                await sleep(reconnect_delay)
+                continue
+            except Exception as e:
+                # Catch Exception (not BaseException) so CancelledError from watch()'s
+                # shutdown still stops the producer instead of being swallowed here.
+                self.logger.warning(f"Unexpected error. Reconnecting in {reconnect_delay} seconds.", exc_info=e)
+                if self.metrics:
+                    self.metrics.increment_disconnects(reason="error")
                 await sleep(reconnect_delay)
                 continue
 
@@ -244,7 +260,9 @@ class HomeConnectClient:
             finally:
                 appliance._pending.discard(kind)
 
-        create_task(deferred())
+        task = create_task(deferred())
+        self._deferred_tasks.add(task)
+        task.add_done_callback(self._deferred_tasks.discard)
 
     def _load_token(self) -> OAuth2Token | None:
         """Load the OAuth token from file."""
