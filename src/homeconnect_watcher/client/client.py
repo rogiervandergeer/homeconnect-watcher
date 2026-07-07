@@ -270,6 +270,9 @@ class HomeConnectSimulationClient(HomeConnectClient):
                 "WineCooler WineCooler-Control WineCooler-Monitor WineCooler-Settings",
                 "redirect_uri": environ["HOMECONNECT_REDIRECT_URI"],
             },
+            # The simulator's grant endpoint rejects requests without a matching Origin header,
+            # returning a 500 instead of the redirect that carries the authorization code.
+            headers={"Origin": "https://simulator.home-connect.com"},
             allow_redirects=False,
         )
         response = session.get(response.headers["Location"], allow_redirects=False)
