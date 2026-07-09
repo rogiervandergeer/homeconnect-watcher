@@ -34,6 +34,7 @@ dev = [
     "pytest-asyncio>=1.0",
     "pytest-mock>=3.10.0",
     "pytest-postgresql>=5.0.0",
+    "ty",
 ]
 prometheus = ["prometheus-client>=0.16.0"]
 
@@ -47,6 +48,9 @@ markers = ["events: preload the database with the given events"]
 
 [tool.setuptools_scm]
 version_file = "src/homeconnect_watcher/_version.py"
+
+[tool.ty.src]
+include = ["src"]
 
 [tool.ruff]
 line-length = 120

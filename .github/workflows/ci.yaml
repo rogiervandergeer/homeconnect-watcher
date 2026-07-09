@@ -34,6 +34,9 @@ jobs:
       - name: Run Pre-Commit
         run: pre-commit run --all-files
 
+      - name: Run ty
+        run: ty check
+
       - name: Run Pytest
         env:
           HOMECONNECT_CLIENT_ID: ${{ vars.HOMECONNECT_CLIENT_ID }}
