@@ -1,6 +1,7 @@
 from datetime import datetime
-from pytest import mark
 from zoneinfo import ZoneInfo
+
+from pytest import mark
 
 from homeconnect_watcher.db import WatcherDBClient
 

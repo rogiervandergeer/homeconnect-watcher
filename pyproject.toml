@@ -50,3 +50,6 @@ version_file = "src/homeconnect_watcher/_version.py"
 
 [tool.ruff]
 line-length = 120
+
+[tool.ruff.lint]
+extend-select = ["I"]

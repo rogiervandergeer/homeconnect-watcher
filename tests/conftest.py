@@ -2,7 +2,7 @@ from dotenv import load_dotenv
 from pytest import fixture
 from pytest_asyncio import fixture as async_fixture
 
-from homeconnect_watcher.client import HomeConnectClient, HomeConnectAppliance
+from homeconnect_watcher.client import HomeConnectAppliance, HomeConnectClient
 from homeconnect_watcher.client.client import HomeConnectSimulationClient
 from homeconnect_watcher.db import WatcherDBClient
 from homeconnect_watcher.event import HomeConnectEvent
