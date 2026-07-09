@@ -7,14 +7,13 @@ on:
     branches:
       - main
 
+permissions:
+  contents: read
+
 jobs:
   test:
     runs-on: ubuntu-latest
     timeout-minutes: 10
-    env:
-      HOMECONNECT_CLIENT_ID: ${{ vars.HOMECONNECT_CLIENT_ID }}
-      HOMECONNECT_CLIENT_SECRET: ${{ secrets.HOMECONNECT_CLIENT_SECRET }}
-      HOMECONNECT_REDIRECT_URI: ${{ vars.HOMECONNECT_REDIRECT_URI }}
 
     steps:
       - uses: actions/checkout@v4
@@ -32,4 +31,8 @@ jobs:
         run: pre-commit run --all-files
 
       - name: Run Pytest
+        env:
+          HOMECONNECT_CLIENT_ID: ${{ vars.HOMECONNECT_CLIENT_ID }}
+          HOMECONNECT_CLIENT_SECRET: ${{ secrets.HOMECONNECT_CLIENT_SECRET }}
+          HOMECONNECT_REDIRECT_URI: ${{ vars.HOMECONNECT_REDIRECT_URI }}
         run: pytest
