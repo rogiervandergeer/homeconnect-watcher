@@ -1,8 +1,8 @@
 from datetime import datetime, timedelta
 
+from homeconnect_watcher.db import WatcherDBClient
 from homeconnect_watcher.event import HomeConnectEvent
 from homeconnect_watcher.exporter import BaseExporter
-from homeconnect_watcher.db import WatcherDBClient
 
 
 class PGExporter(BaseExporter, WatcherDBClient):

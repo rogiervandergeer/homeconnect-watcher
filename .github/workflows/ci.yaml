@@ -7,22 +7,25 @@ on:
     branches:
       - main
 
+permissions:
+  contents: read
+
 jobs:
   test:
     runs-on: ubuntu-latest
     timeout-minutes: 10
-    env:
-      HOMECONNECT_CLIENT_ID: ${{ vars.HOMECONNECT_CLIENT_ID }}
-      HOMECONNECT_CLIENT_SECRET: ${{ secrets.HOMECONNECT_CLIENT_SECRET }}
-      HOMECONNECT_REDIRECT_URI: ${{ vars.HOMECONNECT_REDIRECT_URI }}
+    strategy:
+      fail-fast: false
+      matrix:
+        python-version: ["3.10", "3.11", "3.12", "3.13"]
 
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0 # v7.0.0
 
       - name: Set up Python
-        uses: actions/setup-python@v5
+        uses: actions/setup-python@ece7cb06caefa5fff74198d8649806c4678c61a1 # v6.3.0
         with:
-          python-version: "3.10"
+          python-version: ${{ matrix.python-version }}
 
       - name: Install Dependencies
         run: |
@@ -31,5 +34,12 @@ jobs:
       - name: Run Pre-Commit
         run: pre-commit run --all-files
 
+      - name: Run ty
+        run: ty check
+
       - name: Run Pytest
+        env:
+          HOMECONNECT_CLIENT_ID: ${{ vars.HOMECONNECT_CLIENT_ID }}
+          HOMECONNECT_CLIENT_SECRET: ${{ secrets.HOMECONNECT_CLIENT_SECRET }}
+          HOMECONNECT_REDIRECT_URI: ${{ vars.HOMECONNECT_REDIRECT_URI }}
         run: pytest

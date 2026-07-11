@@ -17,6 +17,8 @@ class View:
     @property
     def name(self) -> str:
         result = search("VIEW(?: IF NOT EXISTS)? ([a-z_]+) AS", self.query, IGNORECASE)
+        if result is None:
+            raise ValueError(f"Cannot determine view name from query: {self.query[:80]!r}")
         return result.group(1)
 
 

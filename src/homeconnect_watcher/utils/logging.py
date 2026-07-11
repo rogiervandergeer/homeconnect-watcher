@@ -1,5 +1,5 @@
 from enum import Enum
-from logging import basicConfig, DEBUG, INFO, WARNING
+from logging import DEBUG, INFO, WARNING, basicConfig
 
 
 class LogLevel(str, Enum):
@@ -9,5 +9,5 @@ class LogLevel(str, Enum):
 
 
 def initialize_logging(level: LogLevel) -> None:
-    level = WARNING if level == LogLevel.WARNING else INFO if level == LogLevel.INFO else DEBUG
-    basicConfig(level=level, format="%(asctime)s %(name)s - %(levelname)s:%(message)s")
+    numeric_level = WARNING if level == LogLevel.WARNING else INFO if level == LogLevel.INFO else DEBUG
+    basicConfig(level=numeric_level, format="%(asctime)s %(name)s - %(levelname)s:%(message)s")

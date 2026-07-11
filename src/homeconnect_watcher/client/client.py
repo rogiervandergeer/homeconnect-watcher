@@ -1,22 +1,21 @@
 from asyncio import sleep
-from json import load, dump
+from json import dump, load
 from logging import getLogger
 from os import environ
 from pathlib import Path
 from re import search
 from time import monotonic
-from typing import AsyncIterable
+from typing import Any, AsyncIterable
 
 from authlib.integrations.httpx_client import AsyncOAuth2Client
 from authlib.oauth2.rfc6749.wrappers import OAuth2Token
+from httpx import ReadTimeout, RemoteProtocolError, StreamError
 from requests import Session
-from httpx import StreamError, ReadTimeout, RemoteProtocolError
-
 
 from homeconnect_watcher.client.appliance import HomeConnectAppliance
-from homeconnect_watcher.trigger import Trigger
 from homeconnect_watcher.event import HomeConnectEvent
-from homeconnect_watcher.exceptions import HomeConnectRequestError, HomeConnectConnectionClosed, HomeConnectTimeout
+from homeconnect_watcher.exceptions import HomeConnectConnectionClosed, HomeConnectRequestError, HomeConnectTimeout
+from homeconnect_watcher.trigger import Trigger
 from homeconnect_watcher.utils import Metrics, retry, timeout
 
 
@@ -38,9 +37,9 @@ class HomeConnectClient:
             token_endpoint=self._token_endpoint,
             token=self._load_token(),
         )
-        self.client.auth = self.client.token_auth  # Ensure we use token auth for all requests.
+        self.client.auth = self.client.token_auth  # ty: ignore[invalid-assignment]  # Ensure token auth everywhere.
         self._appliances: list["HomeConnectAppliance"] | None = None
-        self._last_event: int | None = None
+        self._last_event: float | None = None
         self.metrics = metrics
         if self.metrics:
             self.metrics.set_last_event(lambda: monotonic() - self._last_event if self._last_event else -1)
@@ -224,7 +223,7 @@ class HomeConnectClient:
             dump(token, token_file)
 
     @retry(n_tries=3, exceptions=(ReadTimeout,))
-    async def _get(self, path: str) -> dict[str, ...]:
+    async def _get(self, path: str) -> dict[str, Any]:
         await sleep(delay=1.5)  # Rate limit
         resp = await self.client.get(f"{self._appliances_endpoint}{path}")
         data = resp.json()
