@@ -1,8 +1,8 @@
 from pytest import mark, skip
 
 from homeconnect_watcher.client import HomeConnectAppliance
-from homeconnect_watcher.trigger import Trigger
 from homeconnect_watcher.event import HomeConnectEvent
+from homeconnect_watcher.trigger import Trigger
 
 
 class TestFromStream:

@@ -1,23 +1,22 @@
 from asyncio import Queue, Task, create_task, sleep
 from collections.abc import Callable, Coroutine
-from json import load, dump
+from json import dump, load
 from logging import getLogger
 from os import environ
 from pathlib import Path
 from re import search
 from time import monotonic
-from typing import AsyncIterable
+from typing import Any, AsyncIterable
 
 from authlib.integrations.httpx_client import AsyncOAuth2Client
 from authlib.oauth2.rfc6749.wrappers import OAuth2Token
+from httpx import ReadTimeout, RemoteProtocolError, StreamError
 from requests import Session
-from httpx import StreamError, ReadTimeout, RemoteProtocolError
-
 
 from homeconnect_watcher.client.appliance import HomeConnectAppliance
-from homeconnect_watcher.trigger import Trigger
 from homeconnect_watcher.event import HomeConnectEvent
-from homeconnect_watcher.exceptions import HomeConnectRequestError, HomeConnectConnectionClosed, HomeConnectTimeout
+from homeconnect_watcher.exceptions import HomeConnectConnectionClosed, HomeConnectRequestError, HomeConnectTimeout
+from homeconnect_watcher.trigger import Trigger
 from homeconnect_watcher.utils import Metrics, retry, timeout
 
 
@@ -39,9 +38,9 @@ class HomeConnectClient:
             token_endpoint=self._token_endpoint,
             token=self._load_token(),
         )
-        self.client.auth = self.client.token_auth  # Ensure we use token auth for all requests.
+        self.client.auth = self.client.token_auth  # ty: ignore[invalid-assignment]  # Ensure token auth everywhere.
         self._appliances: list["HomeConnectAppliance"] | None = None
-        self._last_event: int | None = None
+        self._last_event: float | None = None
         # Outstanding deferred-fetch tasks, tracked so they are cancelled when watching stops.
         self._deferred_tasks: set[Task] = set()
         self.metrics = metrics
@@ -282,7 +281,7 @@ class HomeConnectClient:
             dump(token, token_file)
 
     @retry(n_tries=3, exceptions=(ReadTimeout,))
-    async def _get(self, path: str) -> dict[str, ...]:
+    async def _get(self, path: str) -> dict[str, Any]:
         await sleep(delay=1.5)  # Rate limit
         resp = await self.client.get(f"{self._appliances_endpoint}{path}")
         data = resp.json()
@@ -328,6 +327,9 @@ class HomeConnectSimulationClient(HomeConnectClient):
                 "WineCooler WineCooler-Control WineCooler-Monitor WineCooler-Settings",
                 "redirect_uri": environ["HOMECONNECT_REDIRECT_URI"],
             },
+            # The simulator's grant endpoint rejects requests without a matching Origin header,
+            # returning a 500 instead of the redirect that carries the authorization code.
+            headers={"Origin": "https://simulator.home-connect.com"},
             allow_redirects=False,
         )
         response = session.get(response.headers["Location"], allow_redirects=False)

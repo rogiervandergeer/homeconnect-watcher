@@ -9,9 +9,10 @@ from typer import Option, Typer
 from uvicorn import run
 
 from homeconnect_watcher.api import loop
-from homeconnect_watcher.client.client import HomeConnectSimulationClient, HomeConnectClient
+from homeconnect_watcher.client.client import HomeConnectClient, HomeConnectSimulationClient
 from homeconnect_watcher.db import WatcherDBClient
 from homeconnect_watcher.db.utils import clean_schema
+from homeconnect_watcher.exporter.base import BaseExporter
 from homeconnect_watcher.exporter.file import FileExporter
 from homeconnect_watcher.exporter.postgres import PGExporter
 from homeconnect_watcher.read import read_events
@@ -53,7 +54,7 @@ def watch(
     initialize_logging(level=log_level)
     metrics = Metrics(port=metrics_port) if metrics_port else None
     client = (HomeConnectSimulationClient if simulation else HomeConnectClient)(metrics=metrics)
-    exporters = []
+    exporters: list[BaseExporter] = []
     if log_path is not None:
         exporters.append(FileExporter(path=Path(log_path), flush_interval=timedelta(seconds=flush_interval)))
     if db_uri is not None:
@@ -63,8 +64,8 @@ def watch(
 
 @app.command()
 def load(
-    db_uri: Annotated[Optional[str], Option(envvar="HCW_DB_URI")] = None,
-    log_path: Annotated[Optional[str], Option(envvar="HOMECONNECT_PATH")] = None,
+    db_uri: Annotated[str, Option(envvar="HCW_DB_URI")],
+    log_path: Annotated[str, Option(envvar="HOMECONNECT_PATH")],
     clean: bool = False,
 ):
     exporter = PGExporter(connection_string=db_uri)
@@ -81,7 +82,7 @@ def load(
 
 
 @app.command()
-def views(db_uri: Annotated[Optional[str], Option(envvar="HCW_DB_URI")] = None, drop: bool = False):
+def views(db_uri: Annotated[str, Option(envvar="HCW_DB_URI")], drop: bool = False):
     with WatcherDBClient(connection_string=db_uri, init=False) as client:
         with client.connection.transaction():
             if drop:
@@ -90,6 +91,6 @@ def views(db_uri: Annotated[Optional[str], Option(envvar="HCW_DB_URI")] = None, 
 
 
 @app.command()
-def refresh_view(db_uri: Annotated[Optional[str], Option(envvar="HCW_DB_URI")] = None):
+def refresh_view(db_uri: Annotated[str, Option(envvar="HCW_DB_URI")]):
     with WatcherDBClient(connection_string=db_uri) as client:
         client.refresh_views()

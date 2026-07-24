@@ -1,19 +1,21 @@
 from json import dumps
 from logging import getLogger
 
-from psycopg import Connection, Cursor, connect
+from psycopg import Connection, Cursor, connect, sql
 
-from .view import load_views
 from ..event import HomeConnectEvent
+from .view import load_views
 
 logger = getLogger(__name__)
 
 
 class WatcherDBClient:
+    # Set in __enter__; only valid inside the context.
+    connection: Connection
+    cursor: Cursor
+
     def __init__(self, connection_string: str, init: bool = True):
         self.connection_string = connection_string
-        self.connection: Connection | None = None
-        self.cursor: Cursor | None = None
         self.init = init
 
     def __enter__(self) -> "WatcherDBClient":
@@ -27,9 +29,9 @@ class WatcherDBClient:
 
     def __exit__(self, exc_type, exc_val, exc_tb) -> None:
         self.cursor.close()
-        self.cursor = None
+        del self.cursor
         self.connection.close()
-        self.connection = None
+        del self.connection
         logger.info("Database connection closed.")
         return
 
@@ -37,6 +39,7 @@ class WatcherDBClient:
     def event_count(self) -> int:
         self.cursor.execute("SELECT COUNT(*) AS cnt FROM events")
         result = self.cursor.fetchone()
+        assert result is not None  # COUNT(*) always returns a row.
         return result[0]
 
     def create_table(self) -> None:
@@ -57,20 +60,20 @@ CREATE TABLE IF NOT EXISTS events (
         logger.info("Creating events table.")
         with self.connection.transaction():
             for view in load_views():
-                self.connection.execute(view.query)
+                self.connection.execute(view.query)  # ty: ignore[no-matching-overload]  # trusted packaged SQL
 
     def drop_views(self) -> None:
         logger.info("Dropping views.")
         with self.connection.transaction():
             for view in reversed(load_views()):
-                self.connection.execute(view.drop_query)
+                self.connection.execute(view.drop_query)  # ty: ignore[no-matching-overload]  # trusted packaged SQL
 
     def refresh_views(self) -> None:
         logger.info("Creating views.")
         with self.connection.transaction():
             for view in load_views():
                 if view.materialized:
-                    self.connection.execute(f"REFRESH MATERIALIZED VIEW {view.name};")
+                    self.connection.execute(sql.SQL("REFRESH MATERIALIZED VIEW {};").format(sql.Identifier(view.name)))
 
     def write_events(self, events: list[HomeConnectEvent]) -> None:
         data = [(event.appliance_id or "", event.event, event.datetime, dumps(event.items)) for event in events]

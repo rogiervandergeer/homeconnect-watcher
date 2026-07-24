@@ -1,10 +1,8 @@
-from asyncio import get_event_loop
-
 from dotenv import load_dotenv
 from pytest import fixture
 from pytest_asyncio import fixture as async_fixture
 
-from homeconnect_watcher.client import HomeConnectClient, HomeConnectAppliance
+from homeconnect_watcher.client import HomeConnectAppliance, HomeConnectClient
 from homeconnect_watcher.client.client import HomeConnectSimulationClient
 from homeconnect_watcher.db import WatcherDBClient
 from homeconnect_watcher.event import HomeConnectEvent
@@ -13,13 +11,6 @@ from homeconnect_watcher.event import HomeConnectEvent
 @fixture(scope="session", autouse=True)
 def dotenv():
     load_dotenv()
-
-
-@fixture(scope="session")
-def event_loop():
-    loop = get_event_loop()
-    yield loop
-    loop.close()
 
 
 @async_fixture(scope="session")

@@ -2,7 +2,6 @@ from logging import getLogger
 from time import monotonic
 from typing import Callable
 
-
 from homeconnect_watcher._version import __version__
 from homeconnect_watcher.event import HomeConnectEvent
 
@@ -25,7 +24,7 @@ class Metrics:
     def __init__(self, port: int):
         self.logger = getLogger(self.__class__.__name__)
         try:
-            from prometheus_client import Counter, Gauge, Info, start_http_server
+            from prometheus_client import Counter, Gauge, Info, start_http_server  # ty: ignore[unresolved-import]
         except ImportError:
             self.logger.error("Unable to expose prometheus metrics; prometheus_client is not installed.")
             self.logger.error(

@@ -2,6 +2,7 @@ from dataclasses import dataclass
 from datetime import datetime
 from json import dumps, loads
 from time import time
+from typing import Any
 
 from homeconnect_watcher.trigger import Trigger
 
@@ -11,15 +12,15 @@ class HomeConnectEvent:
     event: str
     timestamp: float
     appliance_id: str | None = None
-    data: dict[str, ...] | None = None
-    error: dict[str, ...] | None = None
+    data: dict[str, Any] | None = None
+    error: dict[str, Any] | None = None
 
     @property
     def datetime(self) -> datetime:
         return datetime.fromtimestamp(self.timestamp).astimezone()
 
     @classmethod
-    def from_request(cls, request: str, appliance_id: str, response: dict[str, ...]) -> "HomeConnectEvent":
+    def from_request(cls, request: str, appliance_id: str, response: dict[str, Any]) -> "HomeConnectEvent":
         if "error" in response:
             error = response["error"]
             data = None
@@ -36,7 +37,7 @@ class HomeConnectEvent:
 
     @classmethod
     def from_stream(cls, stream: bytes) -> "HomeConnectEvent":
-        data = {"timestamp": time()}
+        data: dict[str, Any] = {"timestamp": time()}
         for line in stream.decode("utf-8").split("\n"):
             if line.startswith("data:") and len(line) > 5:
                 data["data"] = loads(line[5:])
@@ -69,6 +70,7 @@ class HomeConnectEvent:
             ):
                 return {"BSH.Common.Root.ActiveProgram": None}
             else:
+                assert self.data is not None
                 result = {item["key"]: item["value"] for item in self.data["options"]}
                 result["BSH.Common.Root.ActiveProgram"] = self.data["key"]
                 return result
@@ -79,14 +81,17 @@ class HomeConnectEvent:
             ):
                 return {"BSH.Common.Root.SelectedProgram": None}
             else:
+                assert self.data is not None
                 result = {item["key"]: item["value"] for item in self.data["options"]}
                 result["BSH.Common.Root.SelectedProgram"] = self.data["key"]
                 return result
         elif self.error is not None:
             return {}
         elif self.event == "STATUS-REQUEST":
+            assert self.data is not None
             return {entry["key"]: entry["value"] for entry in self.data["status"]}
         elif self.event == "SETTINGS-REQUEST":
+            assert self.data is not None
             return {entry["key"]: entry["value"] for entry in self.data["settings"]}
         elif self.event in ("CONNECTED", "DISCONNECTED"):
             if self.data is not None and "key" in self.data:
@@ -105,7 +110,7 @@ class HomeConnectEvent:
         return None
 
     def __str__(self) -> str:
-        data = dict(appliance_id=self.appliance_id, event=self.event, timestamp=self.timestamp)
+        data: dict[str, Any] = dict(appliance_id=self.appliance_id, event=self.event, timestamp=self.timestamp)
         if self.data:
             data["data"] = self.data
         if self.error:
@@ -115,14 +120,17 @@ class HomeConnectEvent:
     @property
     def trigger(self) -> Trigger | None:
         if self.event in ("CONNECTED", "PAIRED"):
+            assert self.appliance_id is not None
             # For any new(ly connected) appliance, we perform all requests.
             return Trigger(
                 appliance_id=self.appliance_id, status=True, settings=True, selected_program=True, active_program=True
             )
         elif self.event in ("NOTIFY", "EVENT"):
+            assert self.appliance_id is not None
             # For any appliance that is active, request the status once in a while.
             return Trigger(appliance_id=self.appliance_id, status=True, interval=True)
         elif self.event == "STATUS":
+            assert self.appliance_id is not None
             # For an appliance that just switched to running, get the program.
             if self.items.get("BSH.Common.Status.OperationState", "") == "BSH.Common.EnumType.OperationState.Run":
                 return Trigger(appliance_id=self.appliance_id, active_program=True, settings=True)

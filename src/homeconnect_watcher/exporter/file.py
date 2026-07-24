@@ -1,6 +1,6 @@
 from datetime import datetime, timedelta
 from pathlib import Path
-from typing import Optional, TextIO
+from typing import TextIO
 
 from homeconnect_watcher.event import HomeConnectEvent
 
@@ -8,11 +8,13 @@ from .base import BaseExporter
 
 
 class FileExporter(BaseExporter):
+    # Set in __enter__; only valid inside the context.
+    _fp: TextIO
+
     def __init__(self, path: Path, flush_interval: timedelta = timedelta(minutes=30)):
         super().__init__()
         self.path = path
         self.flush_interval = flush_interval
-        self._fp: Optional[TextIO] = None
         self._last_flush: datetime = datetime.now()
 
     def __enter__(self) -> "FileExporter":
@@ -21,7 +23,7 @@ class FileExporter(BaseExporter):
 
     def __exit__(self, exc_type, exc_val, exc_tb) -> None:
         self._fp.close()
-        self._fp = None
+        del self._fp
         return
 
     def export(self, event: HomeConnectEvent) -> None:

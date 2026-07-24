@@ -1,7 +1,6 @@
 from abc import ABCMeta, abstractmethod
 from logging import getLogger
 
-
 from homeconnect_watcher.event import HomeConnectEvent
 
 
