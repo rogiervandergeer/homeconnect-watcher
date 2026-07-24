@@ -39,7 +39,9 @@ jobs:
 
       - name: Run Pytest
         env:
-          HOMECONNECT_CLIENT_ID: ${{ vars.HOMECONNECT_CLIENT_ID }}
-          HOMECONNECT_CLIENT_SECRET: ${{ secrets.HOMECONNECT_CLIENT_SECRET }}
-          HOMECONNECT_REDIRECT_URI: ${{ vars.HOMECONNECT_REDIRECT_URI }}
+          # The simulator credentials are only available to (and only work for) the repository owner;
+          # without them the simulator tests skip.
+          HOMECONNECT_CLIENT_ID: ${{ github.actor == 'rogiervandergeer' && vars.HOMECONNECT_CLIENT_ID || '' }}
+          HOMECONNECT_CLIENT_SECRET: ${{ github.actor == 'rogiervandergeer' && secrets.HOMECONNECT_CLIENT_SECRET || '' }}
+          HOMECONNECT_REDIRECT_URI: ${{ github.actor == 'rogiervandergeer' && vars.HOMECONNECT_REDIRECT_URI || '' }}
         run: pytest

@@ -1,5 +1,7 @@
+from os import environ
+
 from dotenv import load_dotenv
-from pytest import fixture
+from pytest import fixture, skip
 from pytest_asyncio import fixture as async_fixture
 
 from homeconnect_watcher.client import HomeConnectAppliance, HomeConnectClient
@@ -15,6 +17,10 @@ def dotenv():
 
 @async_fixture(scope="session")
 async def client(tmp_path_factory) -> HomeConnectClient:
+    if not all(
+        environ.get(key) for key in ("HOMECONNECT_CLIENT_ID", "HOMECONNECT_CLIENT_SECRET", "HOMECONNECT_REDIRECT_URI")
+    ):
+        skip("HomeConnect simulator credentials are not configured.")
     result = HomeConnectSimulationClient(token_cache=tmp_path_factory.mktemp("cache") / "token")
     await result.authenticate(username="user", password="password")
     return result

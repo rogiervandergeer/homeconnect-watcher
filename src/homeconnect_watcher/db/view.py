@@ -24,7 +24,7 @@ class View:
 
 def load_views() -> list[View]:
     resources = [r for r in (files("homeconnect_watcher") / "sql").iterdir() if r.is_file()]
-    return [View(resource.read_text()) for resource in sorted(resources)]
+    return [View(resource.read_text()) for resource in sorted(resources, key=lambda resource: resource.name)]
 
 
 def load_view(name: str) -> View:
