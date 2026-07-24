@@ -1,4 +1,5 @@
-from asyncio import sleep
+from asyncio import Queue, Task, create_task, sleep
+from collections.abc import Callable, Coroutine
 from json import dump, load
 from logging import getLogger
 from os import environ
@@ -40,6 +41,8 @@ class HomeConnectClient:
         self.client.auth = self.client.token_auth  # ty: ignore[invalid-assignment]  # Ensure token auth everywhere.
         self._appliances: list["HomeConnectAppliance"] | None = None
         self._last_event: float | None = None
+        # Outstanding deferred-fetch tasks, tracked so they are cancelled when watching stops.
+        self._deferred_tasks: set[Task] = set()
         self.metrics = metrics
         if self.metrics:
             self.metrics.set_last_event(lambda: monotonic() - self._last_event if self._last_event else -1)
@@ -90,18 +93,41 @@ class HomeConnectClient:
         """
         Watch the status of one or all appliances.
 
-        Listens to the event stream and yield all events. In addition, processes triggers of these events
-        to make requests for further details.
+        Listens to the event stream and yields all events. In addition, processes
+        triggers of these events to make requests for further details. Throttled
+        requests that can't fire immediately are deferred — a single fetch is
+        scheduled for when the throttle expires, and any further triggers within
+        that window collapse onto the same pending fetch.
 
-        Automatically reconnects when disconnected or on timeout.
+        Both stream events and deferred-fetch results land on a shared queue and
+        are yielded in arrival order. Automatically reconnects when disconnected
+        or on timeout.
         """
-        async for event in self._initial_triggers(appliance_id=appliance_id):
-            yield event
+        queue: Queue[HomeConnectEvent] = Queue()
+        producer = create_task(self._producer(queue=queue, appliance_id=appliance_id, reconnect_delay=reconnect_delay))
+        try:
+            while True:
+                event = await queue.get()
+                if self.metrics:
+                    self.metrics.increment_event_counter(event=event)
+                yield event
+        finally:
+            producer.cancel()
+            for task in list(self._deferred_tasks):
+                task.cancel()
+
+    async def _producer(self, queue: "Queue[HomeConnectEvent]", appliance_id: str | None, reconnect_delay: int) -> None:
+        """Drive the SSE stream and dispatch triggers onto the shared queue."""
+        try:
+            await self._initial_triggers(queue=queue, appliance_id=appliance_id)
+        except Exception as e:
+            # Best-effort enrichment: a failure here must not kill the producer.
+            self.logger.warning("Error while handling initial triggers.", exc_info=e)
         while True:
             try:
                 async for event in self._event_stream(appliance_id=appliance_id):
-                    async for resulting_event in self._handle_event_and_triggers(event=event):
-                        yield resulting_event
+                    await queue.put(event)
+                    await self._handle_trigger(event.trigger, queue=queue)
             except HomeConnectConnectionClosed:
                 self.logger.warning(f"Connection closed. Reconnecting in {reconnect_delay} seconds.")
                 if self.metrics:
@@ -112,6 +138,14 @@ class HomeConnectClient:
                 self.logger.warning(f"Connection timed out. Reconnecting in {reconnect_delay} seconds.")
                 if self.metrics:
                     self.metrics.increment_disconnects(reason="timeout")
+                await sleep(reconnect_delay)
+                continue
+            except Exception as e:
+                # Catch Exception (not BaseException) so CancelledError from watch()'s
+                # shutdown still stops the producer instead of being swallowed here.
+                self.logger.warning(f"Unexpected error. Reconnecting in {reconnect_delay} seconds.", exc_info=e)
+                if self.metrics:
+                    self.metrics.increment_disconnects(reason="error")
                 await sleep(reconnect_delay)
                 continue
 
@@ -150,60 +184,84 @@ class HomeConnectClient:
                 self.logger.info("Reached end of events stream.")
                 return
 
-    async def _handle_event_and_triggers(self, event: HomeConnectEvent) -> AsyncIterable[HomeConnectEvent]:
+    async def _initial_triggers(self, queue: "Queue[HomeConnectEvent]", appliance_id: str | None) -> None:
         """
-        Handle triggers for an event and increase all corresponding counters.
-        """
-        if self.metrics:
-            self.metrics.increment_event_counter(event=event)
-        yield event
-        async for triggered_event in self._handle_trigger(event.trigger):
-            if self.metrics:
-                self.metrics.increment_event_counter(triggered_event)
-            yield triggered_event
+        Create and handle initial triggers.
 
-    async def _initial_triggers(self, appliance_id: str | None) -> AsyncIterable[HomeConnectEvent]:
-        """
-        Create and handle initial triggers
-
-        If appliance_id is not None, only create requests for the single appliance. Otherwise do so
-        for all known appliances.
+        If appliance_id is not None, only create requests for the single appliance.
+        Otherwise do so for all known appliances. Results are pushed onto `queue`.
         """
         for appliance in await self.appliances:
             if appliance_id == appliance.appliance_id or appliance_id is None:
-                async for triggered_event in self._handle_trigger(
+                await self._handle_trigger(
                     Trigger(
                         appliance_id=appliance.appliance_id,
                         status=True,
                         settings=True,
                         active_program=True,
                         selected_program=True,
-                    )
-                ):
-                    yield triggered_event
-                    if self.metrics:
-                        self.metrics.increment_event_counter(triggered_event)
+                    ),
+                    queue=queue,
+                )
 
-    async def _handle_trigger(self, trigger: Trigger | None) -> AsyncIterable[HomeConnectEvent]:
+    async def _handle_trigger(self, trigger: Trigger | None, queue: "Queue[HomeConnectEvent]") -> None:
         """
-        Handle a trigger.
+        Handle a trigger by firing or deferring the requested fetches.
+
+        Each fetch either runs immediately (when the throttle has elapsed or
+        `trigger.interval` is False) or is scheduled to run when the throttle
+        next expires. Repeated triggers landing during the deferral window
+        collapse onto the single pending task. Results land on `queue`.
         """
         if trigger is None:
             return
         appliance = await self.get_appliance(trigger.appliance_id)
-        if trigger.status:
-            if not trigger.interval or appliance.time_since_update("status") >= 300:
-                yield await appliance.get_status()
-        if trigger.settings:
-            if not trigger.interval or appliance.time_since_update("settings") >= 300:
-                yield await appliance.get_settings()
-        if await appliance.get_available_programs():  # Only if the appliance supports programs.
-            if trigger.active_program:
-                if not trigger.interval or appliance.time_since_update("active_program") >= 300:
-                    yield await appliance.get_active_program()
-            if trigger.selected_program:
-                if not trigger.interval or appliance.time_since_update("selected_program") >= 300:
-                    yield await appliance.get_selected_program()
+        fetches: list[tuple[str, bool, Callable[[], Coroutine]]] = [
+            ("status", trigger.status, appliance.get_status),
+            ("settings", trigger.settings, appliance.get_settings),
+        ]
+        # active/selected program endpoints only exist for appliances that support programs.
+        if (trigger.active_program or trigger.selected_program) and await appliance.get_available_programs():
+            fetches += [
+                ("active_program", trigger.active_program, appliance.get_active_program),
+                ("selected_program", trigger.selected_program, appliance.get_selected_program),
+            ]
+        for kind, wanted, fetch in fetches:
+            if wanted:
+                await self._fetch_or_defer(appliance, kind, fetch, throttled=trigger.interval, queue=queue)
+
+    async def _fetch_or_defer(
+        self,
+        appliance: "HomeConnectAppliance",
+        kind: str,
+        fetch: Callable[[], Coroutine],
+        throttled: bool,
+        queue: "Queue[HomeConnectEvent]",
+    ) -> None:
+        """
+        Fetch immediately if the throttle has elapsed; otherwise schedule a
+        deferred fetch for when it expires. The pending-task set on the
+        appliance deduplicates concurrent triggers for the same request type.
+        """
+        if not throttled or appliance.time_since_update(kind) >= 300:
+            await queue.put(await fetch())
+            return
+        if kind in appliance._pending:
+            return
+        appliance._pending.add(kind)
+
+        async def deferred() -> None:
+            try:
+                wait = 300 - appliance.time_since_update(kind)
+                if wait > 0:
+                    await sleep(wait)
+                await queue.put(await fetch())
+            finally:
+                appliance._pending.discard(kind)
+
+        task = create_task(deferred())
+        self._deferred_tasks.add(task)
+        task.add_done_callback(self._deferred_tasks.discard)
 
     def _load_token(self) -> OAuth2Token | None:
         """Load the OAuth token from file."""
